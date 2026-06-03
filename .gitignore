@@ -13,3 +13,7 @@ pnpm-debug.log*
 
 .env*
 !.env.example
+
+# Tencent Cloud EdgeOne
+.edgeone/
+.tef_dist/
