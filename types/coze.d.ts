@@ -17,6 +17,10 @@ declare global {
         };
       }) => unknown;
     };
+    __jidahCozeChatClient?: {
+      open?: () => void;
+      showChat?: () => void;
+    };
     __jidahCozeChatMounted?: boolean;
   }
 }

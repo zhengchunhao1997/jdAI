@@ -76,6 +76,25 @@ const plans = [
   },
 ];
 
+function openCozeChat() {
+  const client = window.__jidahCozeChatClient;
+
+  if (typeof client?.showChat === "function") {
+    client.showChat();
+    return;
+  }
+
+  if (typeof client?.open === "function") {
+    client.open();
+    return;
+  }
+
+  const cozeButton = document.querySelector<HTMLElement>(
+    '[class*="coze" i], [id*="coze" i], [aria-label*="chat" i], [aria-label*="客服" i]',
+  );
+  cozeButton?.click();
+}
+
 function SectionTitle({
   title,
   subtitle,
@@ -146,12 +165,13 @@ function Header() {
           >
             {dark ? "浅色" : "暗色"}
           </button>
-          <a
-            href="#contact"
+          <button
+            type="button"
+            onClick={openCozeChat}
             className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
           >
             免费体验
-          </a>
+          </button>
         </div>
         <button
           type="button"
@@ -183,13 +203,16 @@ function Header() {
             >
               {dark ? "切换浅色模式" : "切换暗色模式"}
             </button>
-            <a
-              href="#contact"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openCozeChat();
+              }}
               className="rounded-lg bg-brand px-3 py-3 text-center font-semibold text-white"
             >
               免费体验
-            </a>
+            </button>
           </div>
         </div>
       ) : null}
@@ -212,12 +235,13 @@ function Hero() {
             7x24在线 · 懂你的业务 · 会引导转化 · ¥599/月起
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#experience"
+            <button
+              type="button"
+              onClick={openCozeChat}
               className="rounded-full bg-brand px-7 py-3.5 text-center font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:-translate-y-1 hover:bg-brand-dark"
             >
               立即体验AI客服
-            </a>
+            </button>
             <a
               href="#pricing"
               className="rounded-full border border-gray-300 px-7 py-3.5 text-center font-semibold text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:text-white"
@@ -407,62 +431,51 @@ function Faq() {
   );
 }
 
-function Experience() {
-  return (
-    <section id="experience" className="bg-brand-bg py-20 dark:bg-[#15152d]">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          title="亲自体验AI客服"
-          subtitle="直接和我们的AI客服对话，感受真实效果"
-        />
-        <div className="mx-auto flex h-[500px] w-full max-w-[600px] items-center justify-center overflow-hidden rounded-lg border border-dashed border-brand/40 bg-white shadow-soft dark:bg-[#1d1d3d]">
-          <div className="px-8 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-2xl">
-              💬
-            </div>
-            <p className="text-lg font-semibold text-brand-ink dark:text-white">
-              即答AI客服已接入
-            </p>
-            <p className="mt-3 leading-7 text-brand-body dark:text-gray-300">
-              点击页面右下角的客服入口，直接和我们的AI客服对话。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function CozeChatWidget() {
   const cozeToken = process.env.NEXT_PUBLIC_COZE_PAT;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!ready || !cozeToken || cozeToken.includes("*")) {
+    if (!cozeToken || cozeToken.includes("*")) {
+      console.warn("缺少有效 Coze Token");
+      return;
+    }
+
+    if (!ready) {
       return;
     }
 
     const sdk = window.CozeWebSDK;
+    if (!sdk) {
+      console.warn("Coze SDK 未挂载到 window");
+      return;
+    }
+
     if (!sdk || window.__jidahCozeChatMounted) {
       return;
     }
 
-    window.__jidahCozeChatMounted = true;
-    new sdk.WebChatClient({
-      config: {
-        bot_id: "7647138797452410889",
-      },
-      componentProps: {
-        title: "即答AI客服",
-      },
-      auth: {
-        type: "token",
-        token: cozeToken,
-        onRefreshToken: function () {
-          return cozeToken;
+    try {
+      window.__jidahCozeChatMounted = true;
+      window.__jidahCozeChatClient = new sdk.WebChatClient({
+        config: {
+          bot_id: "7647138797452410889",
         },
-      },
-    });
+        componentProps: {
+          title: "即答AI客服",
+        },
+        auth: {
+          type: "token",
+          token: cozeToken,
+          onRefreshToken: function () {
+            return cozeToken;
+          },
+        },
+      }) as Window["__jidahCozeChatClient"];
+    } catch (error) {
+      window.__jidahCozeChatMounted = false;
+      console.warn("Coze 客服初始化失败", error);
+    }
   }, [ready, cozeToken]);
 
   return (
@@ -470,6 +483,7 @@ function CozeChatWidget() {
       src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"
       strategy="afterInteractive"
       onLoad={() => setReady(true)}
+      onError={() => console.warn("Coze SDK 加载失败")}
     />
   );
 }
@@ -577,7 +591,6 @@ export function HomePage() {
         <Scenes />
         <Pricing />
         <Faq />
-        <Experience />
         <Contact />
       </main>
       <Footer />
