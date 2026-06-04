@@ -79,20 +79,81 @@ const plans = [
 function openCozeChat() {
   const client = window.__jidahCozeChatClient;
 
-  if (typeof client?.showChat === "function") {
-    client.showChat();
+  if (typeof client?.showChat === "function" && tryCall(client.showChat, client)) {
     return;
   }
 
-  if (typeof client?.open === "function") {
-    client.open();
+  if (typeof client?.open === "function" && tryCall(client.open, client)) {
     return;
   }
 
-  const cozeButton = document.querySelector<HTMLElement>(
-    '[class*="coze" i], [id*="coze" i], [aria-label*="chat" i], [aria-label*="客服" i]',
+  const clickTarget = findCozeLauncher();
+  clickTarget?.click();
+}
+
+function tryCall(callback: () => void, thisArg: unknown) {
+  try {
+    callback.call(thisArg);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function findCozeLauncher() {
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      [
+        '[class*="coze" i]',
+        '[id*="coze" i]',
+        '[class*="chat" i]',
+        '[id*="chat" i]',
+        '[aria-label*="chat" i]',
+        '[aria-label*="客服" i]',
+        '[role="button"]',
+        "button",
+      ].join(","),
+    ),
   );
-  cozeButton?.click();
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  return candidates.find((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = window.getComputedStyle(element);
+    const classAndId = `${element.className} ${element.id}`.toLowerCase();
+    const isVisible =
+      rect.width > 24 &&
+      rect.height > 24 &&
+      style.display !== "none" &&
+      style.visibility !== "hidden" &&
+      Number(style.opacity) !== 0;
+    const isFloating =
+      style.position === "fixed" ||
+      (rect.right > viewportWidth - 140 && rect.bottom > viewportHeight - 160);
+    const looksLikeCoze =
+      classAndId.includes("coze") ||
+      classAndId.includes("chat") ||
+      element.getAttribute("aria-label")?.toLowerCase().includes("chat") ||
+      element.getAttribute("aria-label")?.includes("客服");
+
+    return isVisible && isFloating && looksLikeCoze;
+  });
+}
+
+function ChatButton({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className: string;
+}) {
+  return (
+    <button type="button" onClick={openCozeChat} className={className}>
+      {children}
+    </button>
+  );
 }
 
 function SectionTitle({
@@ -165,13 +226,11 @@ function Header() {
           >
             {dark ? "浅色" : "暗色"}
           </button>
-          <button
-            type="button"
-            onClick={openCozeChat}
+          <ChatButton
             className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
           >
             免费体验
-          </button>
+          </ChatButton>
         </div>
         <button
           type="button"
@@ -235,13 +294,11 @@ function Hero() {
             7x24在线 · 懂你的业务 · 会引导转化 · ¥599/月起
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={openCozeChat}
+            <ChatButton
               className="rounded-full bg-brand px-7 py-3.5 text-center font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:-translate-y-1 hover:bg-brand-dark"
             >
               立即体验AI客服
-            </button>
+            </ChatButton>
             <a
               href="#pricing"
               className="rounded-full border border-gray-300 px-7 py-3.5 text-center font-semibold text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:text-white"
@@ -383,8 +440,7 @@ function Pricing() {
                   </li>
                 ))}
               </ul>
-              <a
-                href="#contact"
+              <ChatButton
                 className={`mt-8 block rounded-full px-5 py-3 text-center font-semibold transition ${
                   plan.primary
                     ? "bg-brand text-white hover:bg-brand-dark"
@@ -392,7 +448,7 @@ function Pricing() {
                 }`}
               >
                 {plan.cta}
-              </a>
+              </ChatButton>
             </article>
           ))}
         </div>
