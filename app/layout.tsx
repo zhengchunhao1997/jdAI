@@ -42,7 +42,7 @@ export default function RootLayout({
                       window.__jidahCozeChatMounted = true;
                       window.__jidahCozeChatClient = new window.CozeWebSDK.WebChatClient({
                         config: {
-                          bot_id: '7647138797452410889',
+                          bot_id: '7647543972197892159',
                         },
                         componentProps: {
                           title: '即答AI客服',
