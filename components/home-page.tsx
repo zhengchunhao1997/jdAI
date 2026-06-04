@@ -1,5 +1,6 @@
 "use client";
 
+import Script from "next/script";
 import { FormEvent, useEffect, useState } from "react";
 
 const navItems = [
@@ -407,8 +408,6 @@ function Faq() {
 }
 
 function Experience() {
-  const cozeSrc = "";
-
   return (
     <section id="experience" className="bg-brand-bg py-20 dark:bg-[#15152d]">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -417,30 +416,61 @@ function Experience() {
           subtitle="直接和我们的AI客服对话，感受真实效果"
         />
         <div className="mx-auto flex h-[500px] w-full max-w-[600px] items-center justify-center overflow-hidden rounded-lg border border-dashed border-brand/40 bg-white shadow-soft dark:bg-[#1d1d3d]">
-          {cozeSrc ? (
-            <iframe
-              title="即答AI客服体验"
-              src={cozeSrc}
-              className="h-full w-full border-0"
-              loading="lazy"
-            />
-          ) : (
-            // 替换为Coze Web应用链接
-            <div className="px-8 text-center">
-              <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-2xl">
-                💬
-              </div>
-              <p className="text-lg font-semibold text-brand-ink dark:text-white">
-                AI客服体验窗口待嵌入
-              </p>
-              <p className="mt-3 leading-7 text-brand-body dark:text-gray-300">
-                将 Coze Web 应用链接填入 iframe 后，即可在这里展示真实对话体验。
-              </p>
+          <div className="px-8 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-brand/10 text-2xl">
+              💬
             </div>
-          )}
+            <p className="text-lg font-semibold text-brand-ink dark:text-white">
+              即答AI客服已接入
+            </p>
+            <p className="mt-3 leading-7 text-brand-body dark:text-gray-300">
+              点击页面右下角的客服入口，直接和我们的AI客服对话。
+            </p>
+          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function CozeChatWidget() {
+  const cozeToken = process.env.NEXT_PUBLIC_COZE_PAT;
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!ready || !cozeToken || cozeToken.includes("*")) {
+      return;
+    }
+
+    const sdk = window.CozeWebSDK;
+    if (!sdk || window.__jidahCozeChatMounted) {
+      return;
+    }
+
+    window.__jidahCozeChatMounted = true;
+    new sdk.WebChatClient({
+      config: {
+        bot_id: "7647138797452410889",
+      },
+      componentProps: {
+        title: "即答AI客服",
+      },
+      auth: {
+        type: "token",
+        token: cozeToken,
+        onRefreshToken: function () {
+          return cozeToken;
+        },
+      },
+    });
+  }, [ready, cozeToken]);
+
+  return (
+    <Script
+      src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"
+      strategy="afterInteractive"
+      onLoad={() => setReady(true)}
+    />
   );
 }
 
@@ -551,6 +581,7 @@ export function HomePage() {
         <Contact />
       </main>
       <Footer />
+      <CozeChatWidget />
     </>
   );
 }
