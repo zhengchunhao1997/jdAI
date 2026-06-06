@@ -27,6 +27,37 @@ summary::-webkit-details-marker {
   display: none;
 }
 
+/* Coze injects its launcher outside React, so keep these selectors broad but scoped to
+   floating chat-like elements to avoid touching normal page buttons. */
+[class*="coze" i][style*="position: fixed"],
+[id*="coze" i][style*="position: fixed"],
+[class*="chat" i][style*="position: fixed"],
+[id*="chat" i][style*="position: fixed"] {
+  right: 28px !important;
+  bottom: 28px !important;
+}
+
+[class*="coze" i][style*="position: fixed"] button,
+[id*="coze" i][style*="position: fixed"] button,
+[class*="chat" i][style*="position: fixed"] button,
+[id*="chat" i][style*="position: fixed"] button,
+[class*="coze" i][role="button"],
+[id*="coze" i][role="button"] {
+  min-width: 64px !important;
+  min-height: 64px !important;
+  transform-origin: right bottom;
+}
+
+@media (max-width: 640px) {
+  [class*="coze" i][style*="position: fixed"],
+  [id*="coze" i][style*="position: fixed"],
+  [class*="chat" i][style*="position: fixed"],
+  [id*="chat" i][style*="position: fixed"] {
+    right: 18px !important;
+    bottom: 18px !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

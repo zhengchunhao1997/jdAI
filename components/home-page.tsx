@@ -202,20 +202,20 @@ function ChatGuide({
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed bottom-4 right-4 z-[998] h-20 w-20 rounded-full border-4 border-brand-green shadow-[0_0_0_12px_rgba(16,185,129,0.18)] animate-pulse"
+        className="pointer-events-none fixed bottom-7 right-7 z-[998] h-24 w-24 rounded-full border-4 border-brand-green shadow-[0_0_0_14px_rgba(16,185,129,0.16)] animate-pulse"
       />
-      <div className="fixed inset-x-4 bottom-24 z-[999] mx-auto max-w-md rounded-lg bg-brand-ink p-5 text-white shadow-soft md:bottom-8 md:right-24 md:left-auto">
+      <div className="fixed inset-x-4 bottom-32 z-[999] mx-auto max-w-md rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-950 shadow-soft md:bottom-10 md:right-36 md:left-auto">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-lg font-black">请点击右下角蓝色客服图标</p>
-            <p className="mt-2 text-sm leading-6 text-white/80">
+            <p className="mt-2 text-sm leading-6 text-amber-800">
               AI 客服入口在页面右下角。点击圆形客服按钮后，就可以直接体验对话。
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-lg leading-none text-white hover:bg-white/20"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 text-lg leading-none text-amber-950 hover:bg-amber-200"
             aria-label="关闭提示"
           >
             ×
