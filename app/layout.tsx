@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -31,8 +32,14 @@ export default function RootLayout({
         {children}
         {cozeToken ? (
           <>
-            <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js" />
-            <script
+            <Script
+              id="coze-web-sdk"
+              src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"
+              strategy="afterInteractive"
+            />
+            <Script
+              id="jidah-coze-init"
+              strategy="afterInteractive"
               dangerouslySetInnerHTML={{
                 __html: `
                   (function () {
@@ -61,10 +68,10 @@ export default function RootLayout({
                     var timer = window.setInterval(function () {
                       tries += 1;
                       initCoze();
-                      if (window.__jidahCozeChatMounted || tries > 50) {
+                      if (window.__jidahCozeChatMounted || tries > 300) {
                         window.clearInterval(timer);
                       }
-                    }, 100);
+                    }, 200);
                   })();
                 `,
               }}
