@@ -219,7 +219,7 @@ function LeadForm() {
       setSubmitted(true);
       form.reset();
     } catch {
-      setError("提交失败了，可以直接点击右下角AI客服留下联系方式。");
+      setError("提交失败了，可以进入聊天页留下联系方式。");
     } finally {
       setLoading(false);
     }

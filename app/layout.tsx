@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,60 +23,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cozeToken = process.env.NEXT_PUBLIC_COZE_PAT;
-
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body suppressHydrationWarning>
         {children}
-        {cozeToken ? (
-          <>
-            <Script
-              id="coze-web-sdk"
-              src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"
-              strategy="afterInteractive"
-            />
-            <Script
-              id="jidah-coze-init"
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{
-                __html: `
-                  (function () {
-                    var token = ${JSON.stringify(cozeToken)};
-                    function initCoze() {
-                      if (!window.CozeWebSDK || window.__jidahCozeChatMounted) return;
-                      window.__jidahCozeChatMounted = true;
-                      window.__jidahCozeChatClient = new window.CozeWebSDK.WebChatClient({
-                        config: {
-                          bot_id: '7647543972197892159',
-                        },
-                        componentProps: {
-                          title: '即答AI客服',
-                        },
-                        auth: {
-                          type: 'token',
-                          token: token,
-                          onRefreshToken: function () {
-                            return token;
-                          }
-                        }
-                      });
-                    }
-
-                    var tries = 0;
-                    var timer = window.setInterval(function () {
-                      tries += 1;
-                      initCoze();
-                      if (window.__jidahCozeChatMounted || tries > 300) {
-                        window.clearInterval(timer);
-                      }
-                    }, 200);
-                  })();
-                `,
-              }}
-            />
-          </>
-        ) : null}
       </body>
     </html>
   );

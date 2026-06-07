@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { ChatPanel } from "@/components/chat-panel";
 
 const navItems = [
   { label: "方案", href: "#solution" },
@@ -169,10 +170,6 @@ const faqs = [
 
 const leadSources = ["官网", "公众号", "小红书/抖音", "朋友推荐", "其他"];
 
-function showCozeHint() {
-  window.dispatchEvent(new CustomEvent("jidah:show-chat-guide"));
-}
-
 function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -214,13 +211,12 @@ function Header() {
           ))}
         </div>
         <div className="hidden items-center gap-3 md:flex" aria-hidden={open}>
-          <button
-            type="button"
-            onClick={showCozeHint}
+          <a
+            href="#experience"
             className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-brand-ink transition hover:border-brand hover:text-brand dark:border-white/20 dark:text-white"
           >
             体验 AI 客服
-          </button>
+          </a>
           <a
             href="#contact"
             className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -251,16 +247,13 @@ function Header() {
                 {item.label}
               </a>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                showCozeHint();
-              }}
+            <a
+              href="#experience"
+              onClick={() => setOpen(false)}
               className="rounded-lg border border-slate-300 px-3 py-3 text-center font-bold text-brand-ink dark:border-white/20 dark:text-white"
             >
               体验 AI 客服
-            </button>
+            </a>
             <a
               href="#contact"
               onClick={() => setOpen(false)}
@@ -292,13 +285,12 @@ function Hero() {
             7×24 在线，懂你的业务，会引导转化。基于 Coze 工作流和企业知识库，把重复咨询先交给 AI。
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={showCozeHint}
+            <a
+              href="#experience"
               className="rounded-full bg-brand px-7 py-3.5 text-center font-bold text-white transition hover:-translate-y-1 hover:bg-brand-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               立即体验 AI 客服
-            </button>
+            </a>
             <a
               href="#pricing"
               className="rounded-full border border-slate-300 bg-white px-7 py-3.5 text-center font-bold text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:bg-white/8 dark:text-white"
@@ -321,11 +313,10 @@ function Hero() {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={showCozeHint}
-          className="group relative animate-rise overflow-hidden rounded-2xl bg-white text-left shadow-[0_18px_45px_rgba(47,43,109,0.16)] ring-1 ring-indigo-100 transition hover:-translate-y-1 dark:bg-[#181935] dark:ring-white/10"
-          aria-label="查看 AI 客服体验提示"
+        <a
+          href="#experience"
+          className="group relative animate-rise overflow-hidden rounded-2xl bg-white text-left transition hover:-translate-y-1 dark:bg-[#181935]"
+          aria-label="进入 AI 客服体验区"
         >
           <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-brand to-brand-purple px-5 py-4 text-white">
             <span className="flex items-center gap-2 font-bold">
@@ -333,7 +324,7 @@ function Hero() {
               即答 AI 客服 · 在线
             </span>
             <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-bold">
-              可点击体验
+              API 对话
             </span>
           </div>
           <div className="space-y-5 p-5 md:p-7">
@@ -354,7 +345,7 @@ function Hero() {
               ))}
             </div>
           </div>
-        </button>
+        </a>
       </div>
     </section>
   );
@@ -614,29 +605,16 @@ function Pricing() {
 
 function Experience() {
   return (
-    <section className="bg-white py-20 dark:bg-[#111227]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 md:grid-cols-[0.9fr_1.1fr] md:items-center lg:px-8">
+    <section id="experience" className="bg-white py-20 dark:bg-[#111227]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:px-8">
         <SectionTitle
           align="left"
           label="亲自体验"
-          title="右下角就是真实 AI 客服入口"
-          subtitle="点击悬浮客服按钮，直接和即答演示智能体对话。你可以问价格、搭建周期、适用场景、Coze 接入和试用流程。"
+          title="不用找悬浮按钮，直接在这里对话"
+          subtitle="官网现在使用 Coze API 接入自有聊天框。你可以直接问价格、搭建周期、适用场景和转人工规则。"
         />
-        <div className="rounded-2xl bg-brand-ink p-6 text-white dark:bg-[#080914]">
-          <div className="flex items-center gap-2 text-sm font-bold text-emerald-200">
-            <span className="h-2.5 w-2.5 rounded-full bg-brand-green" />
-            Coze 演示智能体已接入
-          </div>
-          <p className="mt-4 text-2xl font-black leading-tight">
-            想看真实效果，直接点页面右下角的蓝色客服图标。
-          </p>
-          <button
-            type="button"
-            onClick={showCozeHint}
-            className="mt-6 rounded-full bg-white px-6 py-3 font-bold text-brand-ink transition hover:-translate-y-1"
-          >
-            提示我点击客服图标
-          </button>
+        <div className="overflow-hidden rounded-2xl bg-[#f7f8ff] dark:bg-[#0f1024]">
+          <ChatPanel mode="embedded" />
         </div>
       </div>
     </section>
@@ -701,7 +679,7 @@ function Contact() {
       setSubmitted(true);
       form.reset();
     } catch {
-      setError("提交失败了，可以直接点击右下角 AI 客服留下联系方式。");
+      setError("提交失败了，可以在上方 AI 客服里留下联系方式。");
     } finally {
       setLoading(false);
     }
@@ -832,51 +810,6 @@ function Footer() {
   );
 }
 
-function ChatGuide() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const show = () => {
-      setVisible(true);
-      window.setTimeout(() => setVisible(false), 6500);
-    };
-
-    window.addEventListener("jidah:show-chat-guide", show);
-    return () => window.removeEventListener("jidah:show-chat-guide", show);
-  }, []);
-
-  if (!visible) {
-    return null;
-  }
-
-  return (
-    <>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed bottom-7 right-7 z-[48] h-24 w-24 rounded-full border-4 border-brand-green shadow-[0_0_0_14px_rgba(16,185,129,0.16)] animate-pulse"
-      />
-      <div className="fixed inset-x-4 bottom-32 z-[49] mx-auto max-w-sm rounded-2xl bg-[#ecfeff] p-5 text-cyan-950 shadow-[0_10px_24px_rgba(8,145,178,0.18)] md:bottom-10 md:right-36 md:left-auto">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-lg font-black">点击右下角蓝色客服图标</p>
-            <p className="mt-2 text-sm leading-6 text-cyan-900">
-              那里是 Coze 演示智能体入口，可以直接体验即答 AI 客服。
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setVisible(false)}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-cyan-100 text-lg leading-none text-cyan-950 hover:bg-cyan-200"
-            aria-label="关闭提示"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
 export function HomePage() {
   return (
     <>
@@ -895,7 +828,6 @@ export function HomePage() {
         <Contact />
       </main>
       <Footer />
-      <ChatGuide />
     </>
   );
 }
