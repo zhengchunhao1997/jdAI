@@ -8,9 +8,10 @@ type Message = {
   id: string;
   role: "assistant" | "user";
   content: string;
+  quickReplies?: boolean;
 };
 
-const starterQuestions = ["适合哪些企业？", "599元包含什么？", "多久上线？", "答不上怎么办？"];
+const starterQuestions = ["即答能做什么？", "多久可以上线？", "AI客服会乱回答吗？"];
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -68,7 +69,9 @@ export function ChatPanel({
     {
       id: "welcome",
       role: "assistant",
-      content: "你好，我是即答AI客服。你可以问价格、周期、场景，也可以直接说行业和咨询量。",
+      content:
+        "您好，我是即答AI客服。您可以问我价格、搭建周期、适用场景、接入渠道，也可以直接说“我要试用”。",
+      quickReplies: true,
     },
   ]);
   const [input, setInput] = useState("");
@@ -200,36 +203,39 @@ export function ChatPanel({
       </div>
 
       <div className={`flex min-h-0 flex-1 flex-col px-3 pt-3 min-[380px]:px-4 ${isFull ? "pb-[7.25rem]" : "pb-3"}`}>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {starterQuestions.map((question) => (
-            <button
-              key={question}
-              type="button"
-              disabled={loading}
-              onClick={() => sendMessage(question)}
-              className="min-h-9 rounded-full bg-white px-3 py-1.5 text-left text-xs font-bold leading-5 text-brand-ink transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/14 min-[420px]:text-sm"
-            >
-              {question}
-            </button>
-          ))}
-        </div>
-
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
           {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-7 min-[420px]:text-base ${
-                  message.role === "user"
-                    ? "rounded-tr-md bg-brand text-white"
-                    : "rounded-tl-md bg-white text-slate-800 dark:bg-white/10 dark:text-slate-100"
-                }`}
-              >
-                {message.content || (
-                  <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
-                    正在回复<span className="animate-pulse">...</span>
-                  </span>
-                )}
+            <div key={message.id} className="flex flex-col gap-2">
+              <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-7 min-[420px]:text-base ${
+                    message.role === "user"
+                      ? "rounded-tr-md bg-brand text-white"
+                      : "rounded-tl-md bg-white text-slate-800 dark:bg-white/10 dark:text-slate-100"
+                  }`}
+                >
+                  {message.content || (
+                    <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-300">
+                      正在回复<span className="animate-pulse">...</span>
+                    </span>
+                  )}
+                </div>
               </div>
+              {message.quickReplies ? (
+                <div className="ml-2 flex max-w-[90%] flex-wrap gap-2">
+                  {starterQuestions.map((question) => (
+                    <button
+                      key={question}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => sendMessage(question)}
+                      className="min-h-9 rounded-full bg-white px-3 py-1.5 text-left text-xs font-bold leading-5 text-brand-ink transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/14 min-[420px]:text-sm"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))}
           {error ? (
