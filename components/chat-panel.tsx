@@ -10,12 +10,7 @@ type Message = {
   content: string;
 };
 
-const starterQuestions = [
-  "即答适合哪些小微企业？",
-  "¥599/月起包含什么？",
-  "多久能上线试跑？",
-  "AI回答不了怎么办？",
-];
+const starterQuestions = ["适合哪些企业？", "599元包含什么？", "多久上线？", "答不上怎么办？"];
 
 function createId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -73,7 +68,7 @@ export function ChatPanel({
     {
       id: "welcome",
       role: "assistant",
-      content: "你好，我是即答AI客服。你可以问价格、周期、适用场景，也可以直接说行业和每天咨询量。",
+      content: "你好，我是即答AI客服。你可以问价格、周期、场景，也可以直接说行业和咨询量。",
     },
   ]);
   const [input, setInput] = useState("");
@@ -189,14 +184,10 @@ export function ChatPanel({
         isFull ? "h-full" : "h-[680px] max-h-[82vh] overflow-hidden rounded-2xl"
       }`}
     >
-      <div
-        className={`border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#111227]/95 ${
-          isFull ? "sticky top-0 z-20" : ""
-        }`}
-      >
-        <div className="flex min-h-14 items-center justify-between gap-3 px-3 min-[380px]:px-4">
+      <div className="border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#111227]/95">
+        <div className="flex min-h-12 items-center justify-between gap-3 px-3 min-[380px]:px-4">
           <a href={isFull ? "/case" : "/chat"} className="flex min-w-0 items-center gap-2 font-black text-brand">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-sm text-white">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-xs text-white">
               答
             </span>
             <span className="truncate">即答AI客服</span>
@@ -208,25 +199,15 @@ export function ChatPanel({
         </div>
       </div>
 
-      <div className={`flex min-h-0 flex-1 flex-col px-3 pt-4 min-[380px]:px-4 ${isFull ? "pb-[7.5rem]" : "pb-3"}`}>
-        <div className="mb-4 rounded-2xl bg-brand-ink p-4 text-white dark:bg-[#080914]">
-          <p className="text-sm font-black text-indigo-200">{isFull ? "案例体验" : "官网内体验"}</p>
-          <h1 className="mt-2 text-[1.45rem] font-black leading-tight min-[420px]:text-3xl">
-            直接问即答AI客服
-          </h1>
-          <p className="mt-2 max-w-[64ch] text-sm leading-6 text-white/78">
-            问价格、周期、适用场景，或说出你的行业和每天咨询量。
-          </p>
-        </div>
-
-        <div className="mb-4 grid gap-2 min-[520px]:grid-cols-2">
+      <div className={`flex min-h-0 flex-1 flex-col px-3 pt-3 min-[380px]:px-4 ${isFull ? "pb-[7.25rem]" : "pb-3"}`}>
+        <div className="mb-3 flex flex-wrap gap-2">
           {starterQuestions.map((question) => (
             <button
               key={question}
               type="button"
               disabled={loading}
               onClick={() => sendMessage(question)}
-              className="min-h-11 rounded-xl bg-white px-3 py-2.5 text-left text-sm font-bold leading-6 text-brand-ink transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
+              className="min-h-9 rounded-full bg-white px-3 py-1.5 text-left text-xs font-bold leading-5 text-brand-ink transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/14 min-[420px]:text-sm"
             >
               {question}
             </button>

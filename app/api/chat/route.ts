@@ -13,6 +13,10 @@ function sse(event: string, data: unknown) {
 }
 
 function extractDelta(eventName: string, data: unknown) {
+  if (!eventName.includes("delta")) {
+    return "";
+  }
+
   if (!data || typeof data !== "object") {
     return "";
   }
@@ -26,19 +30,13 @@ function extractDelta(eventName: string, data: unknown) {
 
   const message = payload.message ?? payload;
   const content = message.content;
-  const role = message.role;
   const type = message.type;
 
   if (typeof content !== "string" || !content) {
     return "";
   }
 
-  if (
-    eventName.includes("delta") ||
-    eventName.includes("message") ||
-    role === "assistant" ||
-    type === "answer"
-  ) {
+  if (type === "answer") {
     return content;
   }
 
@@ -152,9 +150,7 @@ export async function POST(request: Request) {
                 controller.enqueue(encoder.encode(sse("done", {})));
               }
             } catch {
-              if (eventName.includes("delta")) {
-                controller.enqueue(encoder.encode(sse("delta", { content: dataText })));
-              }
+              // Ignore non-JSON stream control payloads from Coze.
             }
           }
         }
