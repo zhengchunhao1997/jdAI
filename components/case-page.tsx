@@ -2,34 +2,26 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-const quickQuestions = [
-  "即答AI客服适合哪些小微企业？",
+const suggestedQuestions = [
+  "即答适合我这个行业吗？",
   "¥599/月起包含什么？",
-  "我的行业适合先试跑吗？",
-  "搭建周期多久？",
-  "AI回答不了怎么办？",
+  "多久能上线试跑？",
+  "AI答不上来怎么办？",
 ];
 
-const scenarios = [
-  {
-    title: "电商零售",
-    desc: "价格、库存、发货、退换货、优惠活动。",
-  },
-  {
-    title: "教培咨询",
-    desc: "课程介绍、适合人群、报名流程、试听预约。",
-  },
-  {
-    title: "本地服务",
-    desc: "服务项目、预约时间、地址路线、套餐说明。",
-  },
+const pathItems = ["看内容", "进案例页", "问AI客服", "留资诊断"];
+
+const useCases = [
+  ["电商", "价格、发货、退换货、活动咨询"],
+  ["教培", "课程介绍、适合人群、报名流程"],
+  ["本地服务", "预约、项目、地址、套餐说明"],
 ];
 
 const fitChecks = [
   "每天有 30 条以上重复咨询",
   "客户问题集中在价格、流程、售后、预约",
-  "已有产品资料、价格表、FAQ 或标准话术",
-  "希望先用一个入口试跑，再决定是否长期使用",
+  "已有产品资料、FAQ、价格表或标准话术",
+  "希望先接一个入口，跑通后再扩展",
 ];
 
 const leadSources = ["小红书", "抖音", "公众号", "朋友推荐", "其他"];
@@ -40,27 +32,27 @@ function openChatHint() {
 
 function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/94 backdrop-blur dark:border-white/10 dark:bg-[#0f1024]/94">
-      <nav className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4" aria-label="案例页导航">
-        <a href="/" className="flex items-center gap-2 font-black text-brand">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-sm text-white">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#0f1024]/95">
+      <nav className="mx-auto flex h-14 max-w-4xl items-center justify-between px-3 min-[380px]:px-4" aria-label="案例页导航">
+        <a href="/" className="flex min-w-0 items-center gap-2 font-black text-brand">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-sm text-white">
             答
           </span>
-          即答
+          <span className="truncate">即答</span>
         </a>
         <div className="flex items-center gap-2">
           <a
             href="/"
-            className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-brand-ink hover:border-brand hover:text-brand dark:border-white/20 dark:text-white sm:inline-flex"
+            className="hidden rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-brand-ink hover:border-brand hover:text-brand dark:border-white/20 dark:text-white min-[420px]:inline-flex"
           >
             查看官网
           </a>
           <button
             type="button"
             onClick={openChatHint}
-            className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-dark"
+            className="rounded-full bg-brand px-4 py-2 text-sm font-black text-white hover:bg-brand-dark"
           >
-            体验AI客服
+            体验AI
           </button>
         </div>
       </nav>
@@ -70,59 +62,56 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f7f8ff] px-4 pb-12 pt-10 dark:bg-[#0f1024]">
-      <div className="absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_72%_10%,rgba(124,58,237,0.2),transparent_36%),radial-gradient(circle_at_12%_0%,rgba(79,70,229,0.16),transparent_34%)]" />
-      <div className="relative mx-auto grid max-w-5xl gap-8 md:grid-cols-[1.05fr_0.95fr] md:items-center">
+    <section className="relative overflow-hidden bg-[#f7f8ff] px-3 pb-10 pt-7 dark:bg-[#0f1024] min-[380px]:px-4 sm:pt-10">
+      <div className="absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_82%_0%,rgba(124,58,237,0.22),transparent_36%),radial-gradient(circle_at_10%_4%,rgba(79,70,229,0.16),transparent_34%)]" />
+      <div className="relative mx-auto grid max-w-4xl gap-5 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-8">
         <div className="animate-rise">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-black text-brand shadow-[0_2px_8px_rgba(79,70,229,0.12)] dark:bg-white/10 dark:text-indigo-100">
-            <span className="h-2 w-2 rounded-full bg-brand-green" />
-            小微企业AI客服真实演示入口
-          </p>
-          <h1 className="mt-5 text-balance text-4xl font-black leading-[1.08] tracking-[-0.03em] text-brand-ink dark:text-white md:text-6xl">
-            手机打开，直接体验即答AI客服
+          <div className="inline-flex max-w-full items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-black text-brand shadow-[0_2px_8px_rgba(79,70,229,0.12)] dark:bg-white/10 dark:text-indigo-100 min-[380px]:text-sm">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-brand-green" />
+            <span className="truncate">给小红书/抖音用户的AI客服体验页</span>
+          </div>
+          <h1 className="mt-5 max-w-[11ch] text-balance text-[clamp(2.3rem,12vw,4.75rem)] font-black leading-[1.04] tracking-[-0.035em] text-brand-ink dark:text-white md:max-w-[12ch]">
+            手机打开，直接试即答AI客服
           </h1>
-          <p className="mt-5 max-w-2xl text-pretty text-lg leading-8 text-slate-700 dark:text-slate-300">
-            你可以直接问价格、搭建周期、适用行业、会不会乱答、怎么接入公众号或官网。体验完再决定是否申请3天免费试跑。
+          <p className="mt-5 max-w-2xl text-pretty text-[1.02rem] leading-8 text-slate-700 dark:text-slate-300 min-[420px]:text-lg">
+            不用先关注公众号。点右下角蓝色客服图标，直接问价格、搭建周期、适用行业和转人工规则。
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6 grid gap-3 min-[420px]:grid-cols-2">
             <button
               type="button"
               onClick={openChatHint}
-              className="rounded-full bg-brand px-6 py-3.5 text-center font-black text-white transition hover:-translate-y-1 hover:bg-brand-dark"
+              className="min-h-12 rounded-xl bg-brand px-5 py-3 text-center font-black text-white transition hover:-translate-y-1 hover:bg-brand-dark"
             >
-              点击右下角开始体验
+              提示我点客服图标
             </button>
             <a
               href="#lead"
-              className="rounded-full border border-slate-300 bg-white px-6 py-3.5 text-center font-black text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:bg-white/8 dark:text-white"
+              className="min-h-12 rounded-xl border border-slate-300 bg-white px-5 py-3 text-center font-black text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:bg-white/8 dark:text-white"
             >
-              获取免费诊断
+              留资获取诊断
             </a>
           </div>
-          <p className="mt-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
-            从小红书、抖音、公众号过来的用户，先体验这个页面就够了。
-          </p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-[0_18px_45px_rgba(47,43,109,0.14)] dark:bg-[#181935]">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-white/10">
+        <div className="rounded-2xl bg-white p-4 dark:bg-[#181935] min-[380px]:p-5 lg:p-6">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-black text-brand-ink dark:text-white">建议你这样问</p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                复制问题到右下角AI客服即可
+              <p className="text-lg font-black text-brand-ink dark:text-white">先问这4个问题</p>
+              <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                点问题会提示你打开右下角AI客服。
               </p>
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+            <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
               在线
             </span>
           </div>
-          <div className="mt-4 space-y-3">
-            {quickQuestions.map((question) => (
+          <div className="mt-4 grid gap-2">
+            {suggestedQuestions.map((question) => (
               <button
                 key={question}
                 type="button"
                 onClick={openChatHint}
-                className="block w-full rounded-xl bg-indigo-50 px-4 py-3 text-left text-sm font-bold leading-6 text-brand-ink transition hover:bg-indigo-100 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
+                className="min-h-12 rounded-xl bg-indigo-50 px-3.5 py-3 text-left text-sm font-bold leading-6 text-brand-ink transition hover:bg-indigo-100 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
               >
                 {question}
               </button>
@@ -134,16 +123,16 @@ function Hero() {
   );
 }
 
-function ConversionPath() {
+function PathStrip() {
   return (
-    <section className="bg-brand-ink px-4 py-10 text-white dark:bg-[#080914]">
-      <div className="mx-auto max-w-5xl">
-        <p className="text-sm font-black text-indigo-200">当前最短路径</p>
-        <div className="mt-5 grid gap-3 md:grid-cols-4">
-          {["内容平台", "Case体验页", "AI客服判断", "留资人工跟进"].map((item, index) => (
-            <div key={item} className="rounded-xl bg-white/10 p-4">
-              <span className="text-sm font-black text-indigo-200">0{index + 1}</span>
-              <p className="mt-2 font-black">{item}</p>
+    <section className="bg-brand-ink px-3 py-7 text-white dark:bg-[#080914] min-[380px]:px-4">
+      <div className="mx-auto max-w-4xl">
+        <p className="text-sm font-black text-indigo-200">最短转化路径</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 min-[520px]:grid-cols-4">
+          {pathItems.map((item, index) => (
+            <div key={item} className="rounded-xl bg-white/10 p-3.5">
+              <span className="text-xs font-black text-indigo-200">{index + 1}</span>
+              <p className="mt-1 font-black">{item}</p>
             </div>
           ))}
         </div>
@@ -152,24 +141,24 @@ function ConversionPath() {
   );
 }
 
-function WhatToTest() {
+function UseCases() {
   return (
-    <section className="bg-white px-4 py-14 dark:bg-[#111227]">
-      <div className="mx-auto max-w-5xl">
-        <div className="max-w-3xl">
-          <p className="text-sm font-black text-brand">体验目标</p>
-          <h2 className="mt-3 text-balance text-3xl font-black tracking-[-0.02em] text-brand-ink dark:text-white md:text-5xl">
-            不用先看完整官网，先判断它能不能解决你的重复咨询
+    <section className="bg-white px-3 py-12 dark:bg-[#111227] min-[380px]:px-4">
+      <div className="mx-auto max-w-4xl">
+        <div className="max-w-2xl">
+          <p className="text-sm font-black text-brand">适合先试的场景</p>
+          <h2 className="mt-3 text-balance text-[clamp(1.85rem,8vw,3rem)] font-black leading-tight tracking-[-0.025em] text-brand-ink dark:text-white">
+            重复问题多，AI客服才容易跑出效果
           </h2>
           <p className="mt-4 leading-8 text-slate-700 dark:text-slate-300">
-            这个案例页只保留和转化有关的信息：你适不适合、AI能做什么、不能做什么、怎么开始试跑。
+            这个页面不讲复杂系统，先让你判断即答能不能接住当前最烦的重复咨询。
           </p>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {scenarios.map((item) => (
-            <article key={item.title} className="rounded-2xl bg-slate-50 p-5 dark:bg-white/8">
-              <h3 className="text-xl font-black text-brand-ink dark:text-white">{item.title}</h3>
-              <p className="mt-3 leading-7 text-slate-700 dark:text-slate-300">{item.desc}</p>
+        <div className="mt-7 grid gap-3 sm:grid-cols-3">
+          {useCases.map(([title, desc]) => (
+            <article key={title} className="rounded-2xl bg-slate-50 p-4 dark:bg-white/8">
+              <h3 className="text-lg font-black text-brand-ink dark:text-white">{title}</h3>
+              <p className="mt-2 leading-7 text-slate-700 dark:text-slate-300">{desc}</p>
             </article>
           ))}
         </div>
@@ -180,25 +169,25 @@ function WhatToTest() {
 
 function FitCheck() {
   return (
-    <section className="bg-brand-bg px-4 py-14 dark:bg-[#15162d]">
-      <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-start">
+    <section className="bg-brand-bg px-3 py-12 dark:bg-[#15162d] min-[380px]:px-4">
+      <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-[0.86fr_1.14fr] lg:items-start">
         <div>
           <p className="text-sm font-black text-brand">适配判断</p>
-          <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-brand-ink dark:text-white">
+          <h2 className="mt-3 text-[clamp(1.75rem,7vw,2.75rem)] font-black leading-tight tracking-[-0.025em] text-brand-ink dark:text-white">
             符合这些情况，建议先试跑3天
           </h2>
           <p className="mt-4 leading-8 text-slate-700 dark:text-slate-300">
-            即答不是让AI替代全部人工，而是先处理重复、标准、低风险的问题。
+            AI先处理重复、标准、低风险的问题，复杂情况继续交给人工。
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-5 dark:bg-[#1b1c39]">
-          <ul className="space-y-4">
+        <div className="rounded-2xl bg-white p-4 dark:bg-[#1b1c39] min-[380px]:p-5">
+          <ul className="space-y-3.5">
             {fitChecks.map((item) => (
               <li key={item} className="flex gap-3 leading-7 text-slate-700 dark:text-slate-300">
                 <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-green text-xs font-black text-white">
                   ✓
                 </span>
-                {item}
+                <span>{item}</span>
               </li>
             ))}
           </ul>
@@ -242,53 +231,36 @@ function LeadForm() {
     }
   };
 
+  const fieldClass =
+    "h-12 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand focus:ring-2 focus:ring-brand/15";
+
   return (
-    <section id="lead" className="bg-gradient-to-r from-brand to-brand-purple px-4 py-14">
-      <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-center">
+    <section id="lead" className="bg-gradient-to-r from-brand to-brand-purple px-3 py-12 min-[380px]:px-4">
+      <div className="mx-auto grid max-w-4xl gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div className="text-white">
           <p className="text-sm font-black text-indigo-100">免费诊断</p>
-          <h2 className="mt-3 text-balance text-3xl font-black leading-tight md:text-5xl">
+          <h2 className="mt-3 text-balance text-[clamp(1.9rem,8vw,3.2rem)] font-black leading-tight">
             想知道你的业务适不适合AI客服？
           </h2>
-          <p className="mt-5 text-lg leading-8 text-white/88">
-            留下行业、咨询量和联系方式，我们帮你判断适不适合先试跑。适合就给你一个3天体验方案。
+          <p className="mt-4 text-base leading-8 text-white/90 min-[420px]:text-lg">
+            留下行业、咨询量和联系方式，我们帮你判断能不能先试跑。适合就给你一个3天体验建议。
           </p>
         </div>
-        <form onSubmit={onSubmit} className="rounded-2xl bg-white p-5 md:p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <input
-              required
-              name="name"
-              placeholder="称呼"
-              className="h-12 rounded-lg border border-slate-300 px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand"
-            />
-            <input
-              required
-              name="company"
-              placeholder="公司/行业"
-              className="h-12 rounded-lg border border-slate-300 px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand"
-            />
-            <input
-              required
-              name="phone"
-              placeholder="手机号"
-              inputMode="tel"
-              className="h-12 rounded-lg border border-slate-300 px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand"
-            />
-            <input
-              name="wechat"
-              placeholder="微信号"
-              className="h-12 rounded-lg border border-slate-300 px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand"
-            />
+        <form onSubmit={onSubmit} className="rounded-2xl bg-white p-4 min-[380px]:p-5 lg:p-6">
+          <div className="grid gap-3.5 min-[560px]:grid-cols-2">
+            <input required name="name" placeholder="称呼" className={fieldClass} />
+            <input required name="company" placeholder="公司/行业" className={fieldClass} />
+            <input required name="phone" placeholder="手机号" inputMode="tel" className={fieldClass} />
+            <input name="wechat" placeholder="微信号" className={fieldClass} />
             <input
               name="dailyConsults"
               placeholder="每天大概多少咨询"
-              className="h-12 rounded-lg border border-slate-300 px-4 text-brand-ink outline-none placeholder:text-slate-600 focus:border-brand md:col-span-2"
+              className={`${fieldClass} min-[560px]:col-span-2`}
             />
             <select
               name="source"
               defaultValue=""
-              className="h-12 rounded-lg border border-slate-300 bg-white px-4 text-brand-ink outline-none focus:border-brand md:col-span-2"
+              className={`${fieldClass} min-[560px]:col-span-2`}
             >
               <option value="" disabled>
                 从哪里看到即答？
@@ -303,7 +275,7 @@ function LeadForm() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-5 h-12 w-full rounded-lg bg-brand font-black text-white transition hover:-translate-y-1 hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-4 min-h-12 w-full rounded-xl bg-brand px-4 py-3 font-black text-white transition hover:-translate-y-1 hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? "提交中..." : "提交，获取3天体验建议"}
           </button>
@@ -325,14 +297,14 @@ function LeadForm() {
 
 function WechatFollowUp() {
   return (
-    <section className="bg-white px-4 py-14 dark:bg-[#111227]">
-      <div className="mx-auto max-w-5xl rounded-2xl bg-slate-50 p-6 dark:bg-white/8">
-        <p className="text-sm font-black text-brand">公众号的位置</p>
-        <h2 className="mt-3 text-2xl font-black text-brand-ink dark:text-white">
-          公众号做后续承接，不做第一入口
+    <section className="bg-white px-3 py-12 dark:bg-[#111227] min-[380px]:px-4">
+      <div className="mx-auto max-w-4xl rounded-2xl bg-slate-50 p-5 dark:bg-white/8">
+        <p className="text-sm font-black text-brand">公众号怎么用</p>
+        <h2 className="mt-3 text-2xl font-black leading-tight text-brand-ink dark:text-white">
+          公众号做后续承接，Case页做第一入口
         </h2>
         <p className="mt-4 leading-8 text-slate-700 dark:text-slate-300">
-          从小红书和抖音来的用户先进入这个Case页体验。体验后，如果想继续看案例、避坑内容或长期咨询，再引导关注公众号。
+          从内容平台来的用户先打开这个页面体验。体验后，再引导关注公众号看案例、避坑内容和后续客服问答。
         </p>
       </div>
     </section>
@@ -360,12 +332,12 @@ function ChatHint() {
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed bottom-5 right-5 z-[48] h-24 w-24 rounded-full border-4 border-brand-green shadow-[0_0_0_14px_rgba(16,185,129,0.16)] animate-pulse"
+        className="pointer-events-none fixed bottom-5 right-5 z-[48] h-20 w-20 rounded-full border-4 border-brand-green shadow-[0_0_0_12px_rgba(16,185,129,0.16)] animate-pulse min-[420px]:h-24 min-[420px]:w-24"
       />
-      <div className="fixed inset-x-4 bottom-32 z-[49] mx-auto max-w-sm rounded-2xl bg-[#ecfeff] p-5 text-cyan-950 shadow-[0_10px_24px_rgba(8,145,178,0.18)] md:bottom-10 md:right-36 md:left-auto">
-        <p className="text-lg font-black">点右下角蓝色客服图标</p>
+      <div className="fixed inset-x-3 bottom-28 z-[49] mx-auto max-w-[22rem] rounded-2xl bg-[#ecfeff] p-4 text-cyan-950 shadow-[0_10px_24px_rgba(8,145,178,0.18)] min-[420px]:p-5 md:bottom-10 md:right-36 md:left-auto">
+        <p className="text-base font-black min-[420px]:text-lg">点右下角蓝色客服图标</p>
         <p className="mt-2 text-sm leading-6 text-cyan-900">
-          这是即答AI客服演示入口。点开后可以直接问推荐问题。
+          这是即答AI客服演示入口，点开后可以直接问推荐问题。
         </p>
       </div>
     </>
@@ -378,14 +350,14 @@ export function CasePage() {
       <Header />
       <main>
         <Hero />
-        <ConversionPath />
-        <WhatToTest />
+        <PathStrip />
+        <UseCases />
         <FitCheck />
         <LeadForm />
         <WechatFollowUp />
       </main>
-      <footer className="bg-brand-ink px-4 py-8 text-white">
-        <div className="mx-auto flex max-w-5xl flex-col justify-between gap-4 text-sm md:flex-row">
+      <footer className="bg-brand-ink px-3 py-8 text-white min-[380px]:px-4">
+        <div className="mx-auto flex max-w-4xl flex-col justify-between gap-3 pb-16 text-sm lg:flex-row lg:pb-0">
           <p className="font-black">即答AI客服案例体验</p>
           <p className="text-white/65">© 2026 即答</p>
         </div>
