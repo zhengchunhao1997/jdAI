@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
 const suggestedQuestions = [
   "即答适合我这个行业吗？",
@@ -26,8 +26,8 @@ const fitChecks = [
 
 const leadSources = ["小红书", "抖音", "公众号", "朋友推荐", "其他"];
 
-function openChatHint() {
-  window.dispatchEvent(new CustomEvent("jidah:case-chat-hint"));
+function chatHref(question?: string) {
+  return question ? `/chat?q=${encodeURIComponent(question)}` : "/chat";
 }
 
 function Header() {
@@ -47,13 +47,9 @@ function Header() {
           >
             查看官网
           </a>
-          <button
-            type="button"
-            onClick={openChatHint}
-            className="rounded-full bg-brand px-4 py-2 text-sm font-black text-white hover:bg-brand-dark"
-          >
+          <a href="/chat" className="rounded-full bg-brand px-4 py-2 text-sm font-black text-white hover:bg-brand-dark">
             体验AI
-          </button>
+          </a>
         </div>
       </nav>
     </header>
@@ -74,16 +70,15 @@ function Hero() {
             手机打开，直接试即答AI客服
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-[1.02rem] leading-8 text-slate-700 dark:text-slate-300 min-[420px]:text-lg">
-            不用先关注公众号。点右下角蓝色客服图标，直接问价格、搭建周期、适用行业和转人工规则。
+            不用先关注公众号。进入聊天页，直接问价格、搭建周期、适用行业和转人工规则。
           </p>
           <div className="mt-6 grid gap-3 min-[420px]:grid-cols-2">
-            <button
-              type="button"
-              onClick={openChatHint}
+            <a
+              href="/chat"
               className="min-h-12 rounded-xl bg-brand px-5 py-3 text-center font-black text-white transition hover:-translate-y-1 hover:bg-brand-dark"
             >
-              提示我点客服图标
-            </button>
+              进入AI客服体验
+            </a>
             <a
               href="#lead"
               className="min-h-12 rounded-xl border border-slate-300 bg-white px-5 py-3 text-center font-black text-brand-ink transition hover:-translate-y-1 hover:border-brand hover:text-brand dark:border-white/20 dark:bg-white/8 dark:text-white"
@@ -98,7 +93,7 @@ function Hero() {
             <div>
               <p className="text-lg font-black text-brand-ink dark:text-white">先问这4个问题</p>
               <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                点问题会提示你打开右下角AI客服。
+                点问题会进入聊天页并自动发送。
               </p>
             </div>
             <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
@@ -107,14 +102,13 @@ function Hero() {
           </div>
           <div className="mt-4 grid gap-2">
             {suggestedQuestions.map((question) => (
-              <button
+              <a
                 key={question}
-                type="button"
-                onClick={openChatHint}
+                href={chatHref(question)}
                 className="min-h-12 rounded-xl bg-indigo-50 px-3.5 py-3 text-left text-sm font-bold leading-6 text-brand-ink transition hover:bg-indigo-100 dark:bg-white/10 dark:text-white dark:hover:bg-white/14"
               >
                 {question}
-              </button>
+              </a>
             ))}
           </div>
         </div>
@@ -311,39 +305,6 @@ function WechatFollowUp() {
   );
 }
 
-function ChatHint() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const show = () => {
-      setVisible(true);
-      window.setTimeout(() => setVisible(false), 6500);
-    };
-
-    window.addEventListener("jidah:case-chat-hint", show);
-    return () => window.removeEventListener("jidah:case-chat-hint", show);
-  }, []);
-
-  if (!visible) {
-    return null;
-  }
-
-  return (
-    <>
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed bottom-5 right-5 z-[48] h-20 w-20 rounded-full border-4 border-brand-green shadow-[0_0_0_12px_rgba(16,185,129,0.16)] animate-pulse min-[420px]:h-24 min-[420px]:w-24"
-      />
-      <div className="fixed inset-x-3 bottom-28 z-[49] mx-auto max-w-[22rem] rounded-2xl bg-[#ecfeff] p-4 text-cyan-950 shadow-[0_10px_24px_rgba(8,145,178,0.18)] min-[420px]:p-5 md:bottom-10 md:right-36 md:left-auto">
-        <p className="text-base font-black min-[420px]:text-lg">点右下角蓝色客服图标</p>
-        <p className="mt-2 text-sm leading-6 text-cyan-900">
-          这是即答AI客服演示入口，点开后可以直接问推荐问题。
-        </p>
-      </div>
-    </>
-  );
-}
-
 export function CasePage() {
   return (
     <>
@@ -362,7 +323,6 @@ export function CasePage() {
           <p className="text-white/65">© 2026 即答</p>
         </div>
       </footer>
-      <ChatHint />
     </>
   );
 }
