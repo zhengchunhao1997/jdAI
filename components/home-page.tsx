@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 import { ChatPanel } from "@/components/chat-panel";
 
 const navItems = [
@@ -193,12 +194,7 @@ function Header() {
         className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
         aria-label="主导航"
       >
-        <a href="#top" className="flex items-center gap-2 text-2xl font-black text-brand">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-base text-white">
-            答
-          </span>
-          即答
-        </a>
+        <BrandLogo href="#top" />
         <div className="hidden items-center gap-7 md:flex" aria-hidden={open}>
           {navItems.map((item) => (
             <a

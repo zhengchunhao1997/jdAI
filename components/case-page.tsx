@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 const suggestedQuestions = [
   "即答适合我这个行业吗？",
@@ -34,12 +35,7 @@ function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#0f1024]/95">
       <nav className="mx-auto flex h-14 max-w-4xl items-center justify-between px-3 min-[380px]:px-4" aria-label="案例页导航">
-        <a href="/" className="flex min-w-0 items-center gap-2 font-black text-brand">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-sm text-white">
-            答
-          </span>
-          <span className="truncate">即答</span>
-        </a>
+        <BrandLogo compact />
         <div className="flex items-center gap-2">
           <a
             href="/"

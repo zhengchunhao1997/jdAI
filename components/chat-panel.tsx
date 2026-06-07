@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export type ChatPanelMode = "full" | "embedded";
 
@@ -189,12 +190,7 @@ export function ChatPanel({
     >
       <div className="border-b border-slate-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-[#111227]/95">
         <div className="flex min-h-12 items-center justify-between gap-3 px-3 min-[380px]:px-4">
-          <a href={isFull ? "/case" : "/chat"} className="flex min-w-0 items-center gap-2 font-black text-brand">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-xs text-white">
-              答
-            </span>
-            <span className="truncate">即答AI客服</span>
-          </a>
+          <BrandLogo compact href={isFull ? "/case" : "/chat"} />
           <span className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-800">
             <span className="h-2 w-2 rounded-full bg-brand-green" />
             在线
