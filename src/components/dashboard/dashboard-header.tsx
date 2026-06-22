@@ -6,7 +6,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { logoutSession } from "@/lib/auth-client"
 
-export function DashboardHeader({ onMenu }: { onMenu: () => void }) {
+export function DashboardHeader({
+  onMenu,
+  onDemoUnavailable,
+}: {
+  onMenu: () => void
+  onDemoUnavailable: () => void
+}) {
   const router = useRouter()
 
   function handleLogout() {
@@ -29,6 +35,7 @@ export function DashboardHeader({ onMenu }: { onMenu: () => void }) {
           <input
             aria-label="搜索客户"
             className="h-9 w-full rounded-lg border border-indigo-100 bg-indigo-50/60 pl-9 pr-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:bg-white focus:ring-3 focus:ring-indigo-500/15"
+            onFocus={onDemoUnavailable}
             placeholder="搜索客户昵称、手机号..."
             type="search"
           />
@@ -49,7 +56,12 @@ export function DashboardHeader({ onMenu }: { onMenu: () => void }) {
             体验 AI 客服
           </Link>
         </Button>
-        <button className="relative text-slate-500 transition-colors hover:text-indigo-700" aria-label="通知">
+        <button
+          className="relative text-slate-500 transition-colors hover:text-indigo-700"
+          aria-label="通知"
+          onClick={onDemoUnavailable}
+          type="button"
+        >
           <Bell size={20} />
           <span className="absolute right-0 top-0 h-2 w-2 rounded-full border border-white bg-red-500" />
         </button>

@@ -363,7 +363,13 @@ export function HighIntentLeadsPanel({ leads }: { leads: AdminLead[] }) {
   )
 }
 
-export function ConcernPanel({ overview }: { overview: AdminOverview | null }) {
+export function ConcernPanel({
+  overview,
+  onDemoUnavailable,
+}: {
+  overview: AdminOverview | null
+  onDemoUnavailable?: () => void
+}) {
   const ranking = overview?.concernRanking ?? []
   const hotQuestions = overview?.hotQuestions ?? []
   const max = Math.max(1, ...ranking.map((item) => item.count))
@@ -388,7 +394,13 @@ export function ConcernPanel({ overview }: { overview: AdminOverview | null }) {
                 </div>
                 <p className="mt-2 truncate text-xs text-amber-800">{item.examples[0] ?? "暂无高频原话"}</p>
               </div>
-              <Button variant="outline" className="border-amber-200 bg-white text-amber-800 hover:bg-amber-50">查看原话</Button>
+              <Button
+                variant="outline"
+                className="border-amber-200 bg-white text-amber-800 hover:bg-amber-50"
+                onClick={onDemoUnavailable}
+              >
+                查看原话
+              </Button>
             </div>
           ))}
           {ranking.length === 0 && <EmptyLine text="暂无顾虑统计，聊天记录同步后会自动汇总。" />}
@@ -467,7 +479,13 @@ export function SessionsPanel({
   )
 }
 
-export function ConversationInsight({ session }: { session: AdminConversation | null }) {
+export function ConversationInsight({
+  session,
+  onDemoUnavailable,
+}: {
+  session: AdminConversation | null
+  onDemoUnavailable?: () => void
+}) {
   if (!session) {
     return (
       <div className={`${panelShell} p-5`}>
@@ -497,7 +515,7 @@ export function ConversationInsight({ session }: { session: AdminConversation | 
         </div>
         <InfoBox title="会话摘要" text={session.summary ?? session.lead?.conversation?.summary ?? "等待 Worker 生成摘要。"} />
         <InfoBox title="AI 建议动作" text={session.lead?.nextAction ?? "暂无建议动作。"} accent />
-        <Button className="w-full">分配跟进</Button>
+        <Button className="w-full" onClick={onDemoUnavailable}>分配跟进</Button>
       </div>
     </div>
   )
@@ -542,7 +560,13 @@ export function LeadsPanel({ leads }: { leads: AdminLead[] }) {
   )
 }
 
-export function HandoffsPanel({ handoffs }: { handoffs: AdminConversation[] }) {
+export function HandoffsPanel({
+  handoffs,
+  onDemoUnavailable,
+}: {
+  handoffs: AdminConversation[]
+  onDemoUnavailable?: () => void
+}) {
   return (
     <div className={panelShell}>
       <PanelHeader title="待跟进客户" description="高意向、风险或需要人工继续沟通的客户" icon={Headset} accent="rose" />
@@ -560,7 +584,7 @@ export function HandoffsPanel({ handoffs }: { handoffs: AdminConversation[] }) {
                 原因：{item.handoffEvents?.[0]?.reason ?? "AI 判断需要人工确认"}
               </p>
             </div>
-            <Button>接管会话</Button>
+            <Button onClick={onDemoUnavailable}>接管会话</Button>
           </div>
         ))}
         {handoffs.length === 0 && <EmptyLine text="暂无待跟进客户，高意向或复杂问题会进入这里。" />}
@@ -569,7 +593,13 @@ export function HandoffsPanel({ handoffs }: { handoffs: AdminConversation[] }) {
   )
 }
 
-export function MissedPanel({ questions }: { questions: AdminMissedQuestion[] }) {
+export function MissedPanel({
+  questions,
+  onDemoUnavailable,
+}: {
+  questions: AdminMissedQuestion[]
+  onDemoUnavailable?: () => void
+}) {
   return (
     <div className={panelShell}>
       <PanelHeader title="未命中问题" description="AI 没有答好的问题，用来补充客户知识库" icon={CircleHelp} accent="rose" />
@@ -581,7 +611,11 @@ export function MissedPanel({ questions }: { questions: AdminMissedQuestion[] })
               <p className="mt-1 text-sm text-slate-600">{item.reason ?? "等待分析原因"}</p>
               <p className="mt-1 text-xs text-rose-700">建议：{item.suggestedAnswer ?? "补充标准答案"}</p>
             </div>
-            <Button variant="outline" className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50">
+            <Button
+              variant="outline"
+              className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50"
+              onClick={onDemoUnavailable}
+            >
               <Plus className="h-4 w-4" />
               补充答案
             </Button>
@@ -748,10 +782,12 @@ export function SettingsPanel({
   merchant,
   onSaved,
   readOnly = false,
+  onDemoUnavailable,
 }: {
   merchant: AdminMerchant | null
   onSaved: (merchant: AdminMerchant) => void
   readOnly?: boolean
+  onDemoUnavailable?: () => void
 }) {
   if (!merchant) {
     return (
@@ -762,17 +798,19 @@ export function SettingsPanel({
     )
   }
 
-  return <SettingsForm key={merchant.id} merchant={merchant} onSaved={onSaved} readOnly={readOnly} />
+  return <SettingsForm key={merchant.id} merchant={merchant} onSaved={onSaved} readOnly={readOnly} onDemoUnavailable={onDemoUnavailable} />
 }
 
 function SettingsForm({
   merchant,
   onSaved,
   readOnly,
+  onDemoUnavailable,
 }: {
   merchant: AdminMerchant
   onSaved: (merchant: AdminMerchant) => void
   readOnly: boolean
+  onDemoUnavailable?: () => void
 }) {
   const [form, setForm] = useState({
     publicName: merchant.publicName ?? "",
@@ -791,7 +829,10 @@ function SettingsForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (readOnly) return
+    if (readOnly) {
+      onDemoUnavailable?.()
+      return
+    }
     setSaving(true)
     setMessage(null)
 
@@ -843,7 +884,9 @@ function SettingsForm({
         </div>
         <div className="flex items-center justify-between gap-3 md:col-span-2">
           <p className="text-sm text-slate-600">{message ?? (readOnly ? "当前为演示模式，不能修改真实配置。" : "保存后新会话会使用最新接待配置。")}</p>
-          <Button disabled={saving || readOnly}>{readOnly ? "演示模式不可保存" : saving ? "正在保存" : "保存设置"}</Button>
+          <Button disabled={saving} onClick={readOnly ? onDemoUnavailable : undefined} type={readOnly ? "button" : "submit"}>
+            {readOnly ? "演示模式不可保存" : saving ? "正在保存" : "保存设置"}
+          </Button>
         </div>
       </form>
     </div>

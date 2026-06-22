@@ -10,13 +10,13 @@ import {
   EffectOverviewPanel,
   FunnelPanel,
   HighIntentLeadsPanel,
-  KnowledgePanel,
   LeadsPanel,
   MissedPanel,
   SessionsPanel,
   SettingsPanel,
 } from "@/components/dashboard/admin-panels"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { DemoUnavailableDialog, DemoUnavailablePanel } from "@/components/dashboard/demo-unavailable"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import {
   type AdminConversation,
@@ -72,6 +72,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [authChecked] = useState(() => typeof window !== "undefined" && isLoggedIn())
   const [error, setError] = useState<string | null>(null)
+  const [demoUnavailableOpen, setDemoUnavailableOpen] = useState(false)
 
   useEffect(() => {
     if (!authChecked) {
@@ -152,16 +153,18 @@ export default function DashboardPage() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <DashboardHeader onMenu={() => setSidebarOpen(true)} />
+        <DashboardHeader onMenu={() => setSidebarOpen(true)} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
 
         <main className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6">
           {!authChecked && (
             <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-6 text-sm text-indigo-700">正在检查登录状态...</div>
           )}
           {authChecked && loading && <DashboardSkeleton />}
-          {authChecked && error && <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>}
+          {authChecked && error && active !== "knowledge" && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
+          )}
 
-          {authChecked && !loading && !error && (
+          {authChecked && !loading && (!error || active === "knowledge") && (
             <>
               {active === "overview" && (
                 <>
@@ -170,11 +173,11 @@ export default function DashboardPage() {
                     <div className="xl:col-span-2">
                       <FunnelPanel overview={state.overview} />
                     </div>
-                    <ConversationInsight session={selected} />
+                    <ConversationInsight session={selected} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
                   </div>
                   <HighIntentLeadsPanel leads={state.overview?.highIntentLeads ?? state.leads.filter((lead) => lead.intentLevel === "HIGH")} />
-                  <ConcernPanel overview={state.overview} />
-                  <MissedPanel questions={state.missedQuestions.slice(0, 6)} />
+                  <ConcernPanel overview={state.overview} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
+                  <MissedPanel questions={state.missedQuestions.slice(0, 6)} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
                   <SessionsPanel sessions={state.sessions} selectedId={selected?.id ?? null} onSelect={setSelectedId} />
                 </>
               )}
@@ -184,30 +187,19 @@ export default function DashboardPage() {
                   <div className="xl:col-span-2">
                     <SessionsPanel sessions={state.sessions} selectedId={selected?.id ?? null} onSelect={setSelectedId} />
                   </div>
-                  <ConversationInsight session={selected} />
+                  <ConversationInsight session={selected} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
                 </div>
               )}
 
               {active === "leads" && <LeadsPanel leads={state.leads} />}
-              {active === "handoffs" && <ConcernPanel overview={state.overview} />}
-              {active === "missed" && <MissedPanel questions={state.missedQuestions} />}
-              {active === "knowledge" && (
-                <KnowledgePanel
-                  readOnly
-                  items={state.knowledgeItems}
-                  onCreated={(item) =>
-                    setState((current) => ({
-                      ...current,
-                      knowledgeItems: [item, ...current.knowledgeItems],
-                    }))
-                  }
-                />
-              )}
+              {active === "handoffs" && <ConcernPanel overview={state.overview} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />}
+              {active === "missed" && <MissedPanel questions={state.missedQuestions} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />}
+              {active === "knowledge" && <DemoUnavailablePanel onOpen={() => setDemoUnavailableOpen(true)} />}
               {active === "analytics" && (
                 <>
                   <EffectOverviewPanel overview={state.overview} />
                   <FunnelPanel overview={state.overview} />
-                  <ConcernPanel overview={state.overview} />
+                  <ConcernPanel overview={state.overview} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />
                   <AnalyticsPanel overview={state.overview} />
                 </>
               )}
@@ -221,12 +213,14 @@ export default function DashboardPage() {
                       merchant,
                     }))
                   }
+                  onDemoUnavailable={() => setDemoUnavailableOpen(true)}
                 />
               )}
             </>
           )}
         </main>
       </div>
+      <DemoUnavailableDialog open={demoUnavailableOpen} onClose={() => setDemoUnavailableOpen(false)} />
     </div>
   )
 }
