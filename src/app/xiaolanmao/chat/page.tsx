@@ -27,8 +27,11 @@ type VisitorProfile = {
 export default function XiaolanmaoChatPage() {
   const [visitorProfile] = useState<VisitorProfile>(() => createVisitorProfile())
   const [viewportHeight, setViewportHeight] = useState("100dvh")
+  const [composerHeight, setComposerHeight] = useState(76)
   const [input, setInput] = useState("")
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const composerRef = useRef<HTMLDivElement | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -41,16 +44,36 @@ export default function XiaolanmaoChatPage() {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  function scrollMessagesToBottom(behavior: ScrollBehavior = "smooth") {
+    const container = messagesScrollRef.current
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior })
+      return
+    }
+
+    messagesEndRef.current?.scrollIntoView({ block: "end", behavior })
+  }
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" })
+    scrollMessagesToBottom("smooth")
   }, [messages, pending])
 
   useEffect(() => {
+    function updateComposerHeight() {
+      const height = composerRef.current?.getBoundingClientRect().height
+      if (height) setComposerHeight(Math.ceil(height))
+    }
+
     function updateViewportHeight() {
       const height = window.visualViewport?.height ?? window.innerHeight
       setViewportHeight(`${Math.round(height)}px`)
+      updateComposerHeight()
+      window.requestAnimationFrame(() => scrollMessagesToBottom("auto"))
+      window.setTimeout(() => scrollMessagesToBottom("auto"), 120)
+      window.setTimeout(() => scrollMessagesToBottom("auto"), 320)
     }
 
+    updateComposerHeight()
     updateViewportHeight()
     window.visualViewport?.addEventListener("resize", updateViewportHeight)
     window.visualViewport?.addEventListener("scroll", updateViewportHeight)
@@ -176,7 +199,12 @@ export default function XiaolanmaoChatPage() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4">
+          <div
+            className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain bg-gray-50 px-4 pt-4"
+            data-chat-scroll="true"
+            ref={messagesScrollRef}
+            style={{ paddingBottom: composerHeight + 16 }}
+          >
             {messages.map((message) => (
               <ChatBubble key={message.id} message={message} />
             ))}
@@ -192,12 +220,20 @@ export default function XiaolanmaoChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div
+            className="sticky bottom-0 shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+            data-chat-composer="true"
+            ref={composerRef}
+          >
             <form className="flex items-center gap-2" onSubmit={handleSubmit}>
               <input
                 className="h-11 min-w-0 flex-1 rounded-full border border-transparent bg-gray-50 px-4 text-base outline-none transition-colors placeholder:text-gray-500 focus:border-indigo-500 focus:bg-white focus:ring-3 focus:ring-indigo-500/15 md:text-sm"
                 disabled={pending}
-                onFocus={() => window.setTimeout(() => messagesEndRef.current?.scrollIntoView({ block: "end" }), 80)}
+                onFocus={() => {
+                  scrollMessagesToBottom("auto")
+                  window.setTimeout(() => scrollMessagesToBottom("auto"), 80)
+                  window.setTimeout(() => scrollMessagesToBottom("auto"), 260)
+                }}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="输入您的问题..."
                 value={input}
