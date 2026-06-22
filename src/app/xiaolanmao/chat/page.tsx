@@ -25,7 +25,7 @@ type VisitorProfile = {
 }
 
 export default function XiaolanmaoChatPage() {
-  const [visitorProfile, setVisitorProfile] = useState<VisitorProfile>(() => createVisitorProfile())
+  const [visitorProfile] = useState<VisitorProfile>(() => createVisitorProfile())
   const [viewportHeight, setViewportHeight] = useState("100dvh")
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
@@ -91,9 +91,11 @@ export default function XiaolanmaoChatPage() {
       })
 
       if (!response.ok) throw new Error(`请求失败：${response.status}`)
-      await readChatStream(response, {
+      let receivedAnswer = false
+      receivedAnswer = await readChatStream(response, {
         onMeta: (conversationId) => setConversationId(conversationId),
         onDelta: (delta) => {
+          receivedAnswer = true
           setMessages((current) =>
             current.map((message) =>
               message.id === assistantMessageId ? { ...message, content: `${message.content}${delta}` } : message,
@@ -101,6 +103,31 @@ export default function XiaolanmaoChatPage() {
           )
         },
       })
+
+      if (!receivedAnswer) {
+        const fallback = await fetch(resolveApiPath("/xiaolanmao-chat"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nickname: currentVisitor.nickname,
+            user_id: currentVisitor.userId,
+            user_message: content,
+          }),
+        })
+
+        if (!fallback.ok) throw new Error(`请求失败：${fallback.status}`)
+
+        const result = (await fallback.json()) as { conversation_id?: string; answer?: string }
+        if (result.conversation_id) setConversationId(result.conversation_id)
+        if (result.answer) {
+          receivedAnswer = true
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === assistantMessageId ? { ...message, content: result.answer ?? "" } : message,
+            ),
+          )
+        }
+      }
 
       setMessages((current) =>
         current.map((message) =>
@@ -304,18 +331,25 @@ async function readChatStream(
     onMeta: (conversationId: string) => void
     onDelta: (delta: string) => void
   },
-) {
+): Promise<boolean> {
   const contentType = response.headers.get("Content-Type") ?? ""
+  let receivedAnswer = false
 
   if (!contentType.includes("text/event-stream")) {
     const result = (await response.json()) as { conversation_id?: string; answer?: string }
     if (result.conversation_id) handlers.onMeta(result.conversation_id)
-    if (result.answer) handlers.onDelta(result.answer)
-    return
+    if (result.answer) {
+      handlers.onDelta(result.answer)
+      receivedAnswer = true
+    }
+    return receivedAnswer
   }
 
   const reader = response.body?.getReader()
-  if (!reader) return
+  if (!reader) {
+    const text = await response.text()
+    return parseStreamText(text, handlers)
+  }
 
   const decoder = new TextDecoder()
   let buffer = ""
@@ -329,13 +363,32 @@ async function readChatStream(
     buffer = blocks.pop() ?? ""
 
     for (const block of blocks) {
-      handleStreamBlock(block, handlers)
+      receivedAnswer = handleStreamBlock(block, handlers) || receivedAnswer
     }
   }
 
   if (buffer.trim()) {
-    handleStreamBlock(buffer, handlers)
+    receivedAnswer = handleStreamBlock(buffer, handlers) || receivedAnswer
   }
+
+  return receivedAnswer
+}
+
+function parseStreamText(
+  text: string,
+  handlers: {
+    onMeta: (conversationId: string) => void
+    onDelta: (delta: string) => void
+  },
+) {
+  let receivedAnswer = false
+  const blocks = text.split(/\n\n+/)
+
+  for (const block of blocks) {
+    receivedAnswer = handleStreamBlock(block, handlers) || receivedAnswer
+  }
+
+  return receivedAnswer
 }
 
 function handleStreamBlock(
@@ -366,8 +419,13 @@ function handleStreamBlock(
   }
 
   if (event === "meta" && data.conversation_id) handlers.onMeta(data.conversation_id)
-  if (event === "delta" && data.content) handlers.onDelta(data.content)
+  if (event === "delta" && data.content) {
+    handlers.onDelta(data.content)
+    return true
+  }
   if (event === "error") throw new Error(data.message ?? "流式回复失败")
+
+  return false
 }
 
 function createVisitorProfile(): VisitorProfile {
