@@ -9,4 +9,11 @@ Primary deployment target:
 
 Required environment variables:
 
-- `NEXT_PUBLIC_COZE_PAT`
+- `COZE_API_TOKEN`
+- `COZE_BOT_ID`
+- `COZE_WORKFLOW_ID`
+- `COZE_WORKFLOW_INPUT_KEY` (defaults to `USER_INPUT`)
+- `COZE_CONVERSATION_NAME` (defaults to `Default`)
+- `DATABASE_URL`
+- `DATABASE_SSL` (optional, defaults to SSL enabled)
+- `CUSTOMER_DATA_API_KEY` (optional; if set, data insert APIs require `Authorization: Bearer <key>`)

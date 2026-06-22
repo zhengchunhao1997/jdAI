@@ -18,3 +18,5 @@ pnpm-debug.log*
 # Tencent Cloud EdgeOne
 .edgeone/
 .tef_dist/
+
+tsconfig.tsbuildinfo

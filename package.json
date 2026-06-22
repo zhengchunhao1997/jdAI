@@ -4,17 +4,23 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "video": "remotion studio remotion/index.ts",
+    "video:render": "remotion render remotion/index.ts jidah-promo out/jidah-promo.mp4",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@remotion/cli": "4.0.478",
     "next": "15.3.8",
+    "pg": "^8.22.0",
     "react": "19.0.1",
-    "react-dom": "19.0.1"
+    "react-dom": "19.0.1",
+    "remotion": "4.0.478"
   },
   "devDependencies": {
     "@types/node": "20.17.57",
+    "@types/pg": "^8.20.0",
     "@types/react": "19.0.12",
     "@types/react-dom": "19.0.4",
     "autoprefixer": "10.4.21",
