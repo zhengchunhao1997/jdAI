@@ -4,30 +4,39 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "video": "remotion studio remotion/index.ts",
-    "video:render": "remotion render remotion/index.ts jidah-promo out/jidah-promo.mp4",
+    "api:dev": "tsx --tsconfig tsconfig.server.json -r tsconfig-paths/register server/index.ts",
+    "worker:dev": "tsx --tsconfig tsconfig.server.json -r tsconfig-paths/register server/worker.ts",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.478",
-    "next": "15.3.8",
-    "pg": "^8.22.0",
-    "react": "19.0.1",
-    "react-dom": "19.0.1",
-    "remotion": "4.0.478"
+    "@base-ui/react": "^1.5.0",
+    "@hono/node-server": "^1.19.6",
+    "@prisma/client": "^6.19.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "20.17.57",
-    "@types/pg": "^8.20.0",
-    "@types/react": "19.0.12",
-    "@types/react-dom": "19.0.4",
-    "autoprefixer": "10.4.21",
-    "eslint": "9.28.0",
-    "eslint-config-next": "15.3.3",
-    "postcss": "8.5.6",
-    "tailwindcss": "3.4.17",
-    "typescript": "5.8.3"
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.7",
+    "prisma": "^6.19.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.4",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5"
   }
 }

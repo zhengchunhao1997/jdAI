@@ -1,0 +1,322 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConversationStatus {
+  AI_SERVING
+  PENDING_HANDOFF
+  HUMAN_SERVING
+  CLOSED
+}
+
+enum SenderType {
+  VISITOR
+  AI
+  STAFF
+  SYSTEM
+}
+
+enum IntentLevel {
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+  UNKNOWN
+}
+
+enum FollowUpStatus {
+  PENDING
+  CONTACTED
+  QUOTED
+  WON
+  INVALID
+}
+
+enum MissedQuestionStatus {
+  PENDING
+  ADDED_TO_KNOWLEDGE
+  IGNORED
+  SENSITIVE
+}
+
+enum AsyncJobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model Merchant {
+  id              String         @id @default(cuid())
+  name            String
+  publicName      String
+  cozeBotId       String?
+  cozeWorkflowId  String?
+  websiteUrl      String?
+  adminEmail      String?
+  notificationUrl String?
+  welcomeMessage  String
+  handoffMessage  String
+  businessHours   String?
+  contactInfo     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  conversations   Conversation[]
+  leads           Lead[]
+  knowledgeItems  KnowledgeItem[]
+}
+
+model Conversation {
+  id              String             @id @default(cuid())
+  merchantId      String
+  visitorId       String
+  channel         String             @default("website")
+  status          ConversationStatus @default(AI_SERVING)
+  intentLevel     IntentLevel        @default(UNKNOWN)
+  latestMessage   String?
+  summary         String?
+  needFollowUp    Boolean            @default(false)
+  assignedStaffId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  closedAt        DateTime?
+  merchant        Merchant           @relation(fields: [merchantId], references: [id])
+  messages        Message[]
+  lead            Lead?
+  missedQuestions MissedQuestion[]
+  handoffEvents   HandoffEvent[]
+  asyncJobs       AsyncJob[]
+  qualityChecks   QualityCheck[]
+
+  @@index([merchantId, updatedAt])
+  @@index([merchantId, status])
+  @@index([merchantId, visitorId, channel, closedAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  senderName     String?
+  content        String
+  rawAiResponse  Json?
+  knowledgeUsed  Boolean?
+  riskFlags      String[]     @default([])
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model Lead {
+  id                  String         @id @default(cuid())
+  merchantId          String
+  conversationId      String         @unique
+  name                String?
+  phone               String?
+  wechat              String?
+  company             String?
+  industry            String?
+  dailyConsultVolume  String?
+  targetChannel       String?
+  demand              String?
+  intentLevel         IntentLevel    @default(UNKNOWN)
+  tags                String[]       @default([])
+  nextAction          String?
+  followUpStatus      FollowUpStatus @default(PENDING)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  merchant            Merchant       @relation(fields: [merchantId], references: [id])
+  conversation        Conversation   @relation(fields: [conversationId], references: [id])
+
+  @@index([merchantId, intentLevel])
+  @@index([merchantId, followUpStatus])
+}
+
+model MissedQuestion {
+  id             String               @id @default(cuid())
+  merchantId     String
+  conversationId String
+  question       String
+  aiAnswer       String?
+  reason         String?
+  suggestedAnswer String?
+  status         MissedQuestionStatus @default(PENDING)
+  createdAt      DateTime             @default(now())
+  conversation   Conversation         @relation(fields: [conversationId], references: [id])
+
+  @@index([merchantId, status])
+}
+
+model HandoffEvent {
+  id             String       @id @default(cuid())
+  conversationId String
+  reason         String
+  triggerType    String
+  handledBy      String?
+  handledAt      DateTime?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model QualityCheck {
+  id             String       @id @default(cuid())
+  conversationId String
+  messageId      String?
+  riskLevel      String
+  riskFlags      String[]     @default([])
+  shouldHandoff  Boolean      @default(false)
+  reason         String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model AsyncJob {
+  id             String         @id @default(cuid())
+  conversationId String
+  jobType        String
+  status         AsyncJobStatus @default(PENDING)
+  payload        Json
+  retryCount     Int            @default(0)
+  errorMessage   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  conversation   Conversation   @relation(fields: [conversationId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([conversationId, jobType])
+}
+
+model KnowledgeItem {
+  id          String   @id @default(cuid())
+  merchantId  String
+  title       String
+  category    String
+  question    String
+  answer      String
+  enabled     Boolean  @default(true)
+  hitCount    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  merchant    Merchant @relation(fields: [merchantId], references: [id])
+
+  @@index([merchantId, enabled])
+  @@index([merchantId, category])
+}
+
+model CustomerLeadRecord {
+  id                 Int       @id @default(autoincrement())
+  cozeRecordId       String?   @unique
+  sysPlatform        String?
+  uuid               String?
+  bstudioCreateTime  DateTime?
+  userId             String
+  nickname           String?
+  height             String?
+  weight             String?
+  targetWeight       String?
+  mainConcern        String?
+  riskFlag           Boolean   @default(false)
+  riskType           String?
+  intentLevel        String?
+  currentStage       String?
+  recommendedPackage String?
+  lastUserMessage    String?
+  lastAiReply        String?
+  leadSummary        String?
+  nextAction         String?
+  followUpTime       DateTime?
+  profileJson        Json?
+  owner              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([cozeRecordId])
+  @@index([intentLevel])
+  @@index([nextAction])
+  @@index([updatedAt])
+  @@map("customer_leads")
+}
+
+model ConversationEventRecord {
+  id                Int       @id @default(autoincrement())
+  cozeRecordId      String?   @unique
+  sysPlatform       String?
+  uuid              String?
+  bstudioCreateTime DateTime?
+  eventId           String?
+  leadId            String?
+  userId            String
+  eventType         String?
+  userMessage       String?
+  aiReply           String?
+  intentLevel       String?
+  nextAction        String?
+  riskFlag          Boolean   @default(false)
+  riskType          String?
+  messageSummary    String?
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([cozeRecordId])
+  @@index([leadId])
+  @@index([intentLevel])
+  @@index([createdAt])
+  @@map("conversation_events")
+}
+
+model KbMissQuestionRecord {
+  id                Int       @id @default(autoincrement())
+  cozeRecordId      String?   @unique
+  sysPlatform       String?
+  uuid              String?
+  bstudioCreateTime DateTime?
+  missId            String?
+  userId            String?
+  chatHistory       String?
+  aiReply           String?
+  nickname          String?
+  missReason        String?
+  route             String?
+  status            String?
+  suggestedAnswer   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  userMessage       String?
+
+  @@index([userId])
+  @@index([cozeRecordId])
+  @@index([status])
+  @@index([route])
+  @@index([createdAt])
+  @@map("kb_miss_questions")
+}
+
+model CozeSyncState {
+  id           Int       @id @default(autoincrement())
+  source       String    @unique
+  databaseId   String
+  cursorField  String
+  lastSyncAt   DateTime?
+  lastRunAt    DateTime?
+  lastStatus   String?
+  lastError    String?
+  fetchedCount Int       @default(0)
+  createdCount Int       @default(0)
+  updatedCount Int       @default(0)
+  skippedCount Int       @default(0)
+  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime  @default(now())
+
+  @@map("coze_sync_states")
+}
