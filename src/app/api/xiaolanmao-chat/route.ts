@@ -8,8 +8,9 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: await request.text(),
     })
+    const body = await response.arrayBuffer()
 
-    return new Response(response.body, {
+    return new Response(body, {
       status: response.status,
       headers: {
         "Content-Type": response.headers.get("content-type") ?? "application/json",

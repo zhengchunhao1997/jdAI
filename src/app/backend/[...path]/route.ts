@@ -19,26 +19,38 @@ export async function OPTIONS() {
 }
 
 async function proxyRequest(request: Request, context: { params: Promise<{ path: string[] }> }) {
-  const { path } = await context.params
-  const sourceUrl = new URL(request.url)
-  const targetUrl = new URL(`/api/${path.join("/")}${sourceUrl.search}`, apiProxyTarget)
-  const headers = new Headers(request.headers)
+  try {
+    const { path } = await context.params
+    const sourceUrl = new URL(request.url)
+    const targetUrl = new URL(`/api/${path.join("/")}${sourceUrl.search}`, apiProxyTarget)
+    const headers = new Headers(request.headers)
 
-  headers.delete("host")
-  headers.delete("content-length")
+    headers.delete("host")
+    headers.delete("content-length")
 
-  const response = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
-  })
+    const response = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
+    })
 
-  const responseHeaders = new Headers(response.headers)
-  responseHeaders.delete("content-encoding")
-  responseHeaders.delete("content-length")
+    const responseHeaders = new Headers(response.headers)
+    responseHeaders.delete("content-encoding")
+    responseHeaders.delete("content-length")
+    const body = await response.arrayBuffer()
 
-  return new Response(response.body, {
-    status: response.status,
-    headers: responseHeaders,
-  })
+    return new Response(body, {
+      status: response.status,
+      headers: responseHeaders,
+    })
+  } catch (error) {
+    return Response.json(
+      {
+        error: "backend proxy failed",
+        detail: error instanceof Error ? error.message : String(error),
+        target: apiProxyTarget,
+      },
+      { status: 502 },
+    )
+  }
 }
