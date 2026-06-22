@@ -11,7 +11,7 @@ const starterQuestions = ["165，160斤，想瘦到120", "什么价格？", "会
 
 function resolveApiPath(path: string) {
   if (apiBaseUrl) return `${apiBaseUrl}${path}`
-  return path.replace(/^\/api\//, "/backend/")
+  return path
 }
 
 type ChatMessage = {
@@ -65,7 +65,7 @@ export default function XiaolanmaoChatPage() {
     setError(null)
 
     try {
-      const response = await fetch(resolveApiPath("/api/xiaolanmao-chat"), {
+      const response = await fetch(resolveApiPath("/xiaolanmao-chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
