@@ -38,6 +38,65 @@ import {
 import { IntentBadge, StatusBadge } from "./badges"
 import { Button } from "@/components/ui/button"
 
+const metricTone = {
+  primary: {
+    card: "border-indigo-500 bg-indigo-600 text-white",
+    label: "text-indigo-50",
+    note: "text-indigo-100/85",
+    value: "text-white",
+    hint: "text-indigo-100/85",
+    iconWrap: "bg-white/16 text-white",
+  },
+  info: {
+    card: "border-sky-200 bg-sky-50/80",
+    label: "text-sky-800",
+    note: "text-sky-700/75",
+    value: "text-sky-950",
+    hint: "text-sky-700",
+    iconWrap: "bg-sky-100 text-sky-700",
+  },
+  warning: {
+    card: "border-amber-200 bg-amber-50/90",
+    label: "text-amber-800",
+    note: "text-amber-700/75",
+    value: "text-amber-950",
+    hint: "text-amber-700",
+    iconWrap: "bg-amber-100 text-amber-700",
+  },
+  success: {
+    card: "border-emerald-200 bg-emerald-50/90",
+    label: "text-emerald-800",
+    note: "text-emerald-700/75",
+    value: "text-emerald-950",
+    hint: "text-emerald-700",
+    iconWrap: "bg-emerald-100 text-emerald-700",
+  },
+  violet: {
+    card: "border-violet-200 bg-violet-50/90",
+    label: "text-violet-800",
+    note: "text-violet-700/75",
+    value: "text-violet-950",
+    hint: "text-violet-700",
+    iconWrap: "bg-violet-100 text-violet-700",
+  },
+  danger: {
+    card: "border-rose-200 bg-rose-50/90",
+    label: "text-rose-800",
+    note: "text-rose-700/75",
+    value: "text-rose-950",
+    hint: "text-rose-700",
+    iconWrap: "bg-rose-100 text-rose-700",
+  },
+} as const
+
+const summaryTone = {
+  indigo: "border-indigo-200 bg-indigo-50 text-indigo-950 [&_p:first-child]:text-indigo-700 [&_p:last-child]:text-indigo-700",
+  success:
+    "border-emerald-200 bg-emerald-50 text-emerald-950 [&_p:first-child]:text-emerald-700 [&_p:last-child]:text-emerald-700",
+  warning:
+    "border-amber-200 bg-amber-50 text-amber-950 [&_p:first-child]:text-amber-700 [&_p:last-child]:text-amber-700",
+} as const
+
 export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
   const metrics = [
     {
@@ -45,51 +104,85 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
       value: overview?.metrics.todayVisitors ?? overview?.metrics.todayConversations ?? 0,
       icon: MessageSquareText,
       hint: `累计客户 ${overview?.metrics.totalConversations ?? 0}`,
+      emphasis: "primary",
+      note: "今日进线规模",
     },
     {
       label: "今日消息数",
       value: overview?.metrics.todayMessages ?? overview?.metrics.todayQuestions ?? 0,
       icon: BarChart3,
       hint: `AI 自动回复 ${overview?.metrics.aiReplies ?? 0}`,
+      emphasis: "info",
+      note: "客服工作量",
     },
     {
       label: "人工接管数",
       value: overview?.metrics.humanHandoffs ?? overview?.metrics.pendingHandoffs ?? 0,
       icon: CheckCircle2,
       hint: "需要人工成交承接",
+      emphasis: "warning",
+      note: "待销售跟进",
     },
     {
       label: "有效线索数",
       value: overview?.metrics.effectiveLeads ?? overview?.metrics.totalLeads ?? 0,
       icon: UserRoundCheck,
       hint: `高意向 ${overview?.metrics.highIntentLeads ?? 0}`,
+      emphasis: "success",
+      note: "可转化客户",
     },
     {
       label: "已下单/待付款",
       value: overview?.metrics.paidOrPending ?? 0,
       icon: WalletCards,
       hint: `未命中 ${overview?.metrics.missedQuestions ?? 0}`,
+      emphasis: "violet",
+      note: "成交进度",
     },
     {
       label: "知识库未命中",
       value: overview?.metrics.missedQuestions ?? 0,
       icon: AlertTriangle,
       hint: `累计 ${overview?.metrics.totalMissedQuestions ?? overview?.metrics.missedQuestions ?? 0}`,
+      emphasis: "danger",
+      note: "需要补知识库",
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 2xl:grid-cols-6">
-      {metrics.map((item) => (
-        <div key={item.label} className="rounded-xl border border-gray-200 bg-white p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">{item.label}</p>
-            <item.icon className="h-4 w-4 text-indigo-600" />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      {metrics.map((item, index) => {
+        const tone = metricTone[item.emphasis as keyof typeof metricTone]
+        const Icon = item.icon
+
+        return (
+          <div
+            key={item.label}
+            className={`group rounded-xl border p-4 transition-colors duration-200 ${tone.card} ${
+              index === 0 ? "sm:col-span-2 xl:col-span-2" : ""
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className={`text-sm font-medium ${tone.label}`}>{item.label}</p>
+                <p className={`mt-1 text-xs ${tone.note}`}>{item.note}</p>
+              </div>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone.iconWrap}`}>
+                <Icon className="h-4 w-4" />
+              </span>
+            </div>
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <p className={`text-3xl font-semibold leading-none tracking-tight ${tone.value}`}>{item.value}</p>
+              {index === 0 && (
+                <span className="hidden rounded-full bg-white/18 px-2.5 py-1 text-xs font-medium text-white/90 sm:inline-flex">
+                  今日核心
+                </span>
+              )}
+            </div>
+            <p className={`mt-3 text-xs ${tone.hint}`}>{item.hint}</p>
           </div>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-gray-900">{item.value}</p>
-          <p className="mt-2 text-xs text-gray-500">{item.hint}</p>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -97,13 +190,33 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
 export function EffectOverviewPanel({ overview }: { overview: AdminOverview | null }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="今日客服效果总览" description="客户最关心 AI 今天接待了多少人、筛出了多少线索" icon={BarChart3} />
+      <PanelHeader
+        title="今日客服效果总览"
+        description="客户最关心 AI 今天接待了多少人、筛出了多少线索"
+        icon={BarChart3}
+        accent="indigo"
+      />
       <div className="p-4">
         <MetricGrid overview={overview} />
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <SummaryTile label="AI 解决率" value={`${overview?.metrics.aiResolutionRate ?? 0}%`} description="回答量和未命中问题综合估算" />
-          <SummaryTile label="节省人工时间" value={`${overview?.metrics.todayTimeSavedMinutes ?? 0} 分钟`} description="按每条消息节省 2 分钟估算" />
-          <SummaryTile label="待跟进客户" value={overview?.metrics.pendingHandoffs ?? 0} description="高意向、下单、风险或需要人工承接" />
+          <SummaryTile
+            label="AI 解决率"
+            value={`${overview?.metrics.aiResolutionRate ?? 0}%`}
+            description="回答量和未命中问题综合估算"
+            tone="success"
+          />
+          <SummaryTile
+            label="节省人工时间"
+            value={`${overview?.metrics.todayTimeSavedMinutes ?? 0} 分钟`}
+            description="按每条消息节省 2 分钟估算"
+            tone="indigo"
+          />
+          <SummaryTile
+            label="待跟进客户"
+            value={overview?.metrics.pendingHandoffs ?? 0}
+            description="高意向、下单、风险或需要人工承接"
+            tone="warning"
+          />
         </div>
       </div>
     </div>
@@ -671,14 +784,26 @@ function PanelHeader({
   title,
   description,
   icon: Icon,
+  accent = "default",
 }: {
   title: string
   description: string
   icon: ComponentType<SVGProps<SVGSVGElement>>
+  accent?: "default" | "indigo"
 }) {
   return (
-    <div className="flex items-center gap-2 border-b border-gray-200 p-4">
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600/10 text-indigo-600">
+    <div
+      className={`flex items-center gap-2 border-b p-4 ${
+        accent === "indigo"
+          ? "border-indigo-100 bg-gradient-to-r from-indigo-50 to-white"
+          : "border-gray-200"
+      }`}
+    >
+      <span
+        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+          accent === "indigo" ? "bg-indigo-600 text-white" : "bg-indigo-600/10 text-indigo-600"
+        }`}
+      >
         <Icon className="h-4 w-4" />
       </span>
       <PanelTitle title={title} description={description} icon={null} />
@@ -699,16 +824,18 @@ function SummaryTile({
   label,
   value,
   description,
+  tone = "indigo",
 }: {
   label: string
   value: string | number
   description: string
+  tone?: keyof typeof summaryTone
 }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-gray-900">{value}</p>
-      <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>
+    <div className={`rounded-lg border px-4 py-3 ${summaryTone[tone]}`}>
+      <p className="text-sm font-medium">{label}</p>
+      <p className="mt-1 text-xl font-semibold">{value}</p>
+      <p className="mt-1 text-xs leading-relaxed">{description}</p>
     </div>
   )
 }
