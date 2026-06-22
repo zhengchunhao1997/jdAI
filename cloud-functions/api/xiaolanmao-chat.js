@@ -1,6 +1,5 @@
 const DEFAULT_WORKFLOW_ID = "7653456639388303412";
 const DEFAULT_API_BASE_URL = "https://api.coze.cn";
-const SUGGESTED_QUESTIONS = ["我适合买几套？", "多久能看到效果？", "可以转人工下单吗？"];
 
 export function onRequestOptions() {
   return new Response(null, { status: 204, headers: corsHeaders() });
@@ -52,6 +51,10 @@ export async function onRequestPost(context) {
       );
     }
 
+    if (context.request.headers.get("Accept")?.includes("text/event-stream")) {
+      return streamCozeResponse(response, userId);
+    }
+
     const parsed = await parseCozeResponse(response);
     if (!parsed.answer) {
       return json(
@@ -66,7 +69,6 @@ export async function onRequestPost(context) {
     return json({
       conversation_id: userId,
       answer: parsed.answer,
-      suggested_questions: SUGGESTED_QUESTIONS,
     });
   } catch (error) {
     return json(
@@ -93,6 +95,84 @@ async function parseCozeResponse(response) {
   const events = parseSseEvents(text);
   const answer = normalizeWorkflowAnswer(events.map((event) => extractWorkflowText(event.data)).join(""));
   return { answer, raw: events };
+}
+
+function streamCozeResponse(response, conversationId) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  if (!response.body) {
+    return new Response(
+      encoder.encode(`${sse("error", { message: "Coze workflow returned empty stream" })}${sse("done", { conversation_id: conversationId })}`),
+      {
+        status: 200,
+        headers: streamHeaders(),
+      },
+    );
+  }
+
+  let buffer = "";
+  let emittedAnswer = "";
+  const stream = new ReadableStream({
+    async start(controller) {
+      controller.enqueue(encoder.encode(sse("meta", { conversation_id: conversationId })));
+
+      try {
+        const reader = response.body.getReader();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split(/\n\n+/);
+          buffer = blocks.pop() || "";
+
+          for (const block of blocks) {
+            const parsed = parseSseEvent(block);
+            if (!parsed) continue;
+
+            const cleanText = normalizeWorkflowAnswer(extractWorkflowText(parsed.data));
+            const delta = getDelta(cleanText, emittedAnswer);
+
+            if (delta) {
+              emittedAnswer += delta;
+              controller.enqueue(encoder.encode(sse("delta", { content: delta })));
+            }
+          }
+        }
+
+        if (buffer.trim()) {
+          const parsed = parseSseEvent(buffer);
+          const cleanText = normalizeWorkflowAnswer(extractWorkflowText(parsed?.data));
+          const delta = getDelta(cleanText, emittedAnswer);
+
+          if (delta) {
+            emittedAnswer += delta;
+            controller.enqueue(encoder.encode(sse("delta", { content: delta })));
+          }
+        }
+
+        controller.enqueue(encoder.encode(sse("done", { conversation_id: conversationId })));
+      } catch (error) {
+        controller.enqueue(
+          encoder.encode(
+            sse("error", {
+              message: error instanceof Error ? error.message : "Stream failed",
+            }),
+          ),
+        );
+        controller.enqueue(encoder.encode(sse("done", { conversation_id: conversationId })));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: streamHeaders(),
+  });
 }
 
 function parseSseEvents(text) {
@@ -123,6 +203,32 @@ function parseSseEvents(text) {
 
       return { event, data };
     });
+}
+
+function parseSseEvent(block) {
+  const lines = String(block || "").split(/\r?\n/);
+  const event =
+    lines
+      .find((line) => line.startsWith("event:"))
+      ?.slice("event:".length)
+      .trim() || "message";
+  const dataText = lines
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice("data:".length).trim())
+    .join("\n");
+
+  if (!event && !dataText) return null;
+
+  let data = dataText;
+  if (dataText && dataText !== "[DONE]") {
+    try {
+      data = JSON.parse(dataText);
+    } catch {
+      data = dataText;
+    }
+  }
+
+  return { event, data };
 }
 
 function extractWorkflowText(data) {
@@ -165,8 +271,19 @@ function normalizeWorkflowAnswer(value) {
     .trim();
 }
 
+function getDelta(cleanText, emittedAnswer) {
+  if (!cleanText) return "";
+  if (!emittedAnswer) return cleanText;
+  if (cleanText.startsWith(emittedAnswer)) return cleanText.slice(emittedAnswer.length);
+  return cleanText;
+}
+
 function normalizeString(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function sse(event, data) {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
 function json(body, status = 200) {
@@ -181,5 +298,15 @@ function corsHeaders() {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
+
+function streamHeaders() {
+  const headers = corsHeaders();
+  return {
+    ...headers,
+    "Cache-Control": "no-cache, no-transform",
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "X-Accel-Buffering": "no",
   };
 }

@@ -7,7 +7,6 @@ import { ArrowLeft, Bot, CheckCircle2, Loader2, Send, ShieldCheck, UserRound } f
 import { Button } from "@/components/ui/button"
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? ""
-const starterQuestions = ["165，160斤，想瘦到120", "什么价格？", "会不会反弹？"]
 
 function resolveApiPath(path: string) {
   if (apiBaseUrl) return `${apiBaseUrl}${path}`
@@ -18,13 +17,6 @@ type ChatMessage = {
   id: string
   role: "assistant" | "user"
   content: string
-  suggestedQuestions?: string[]
-}
-
-type ChatResponse = {
-  conversation_id: string
-  answer: string
-  suggested_questions?: string[]
 }
 
 type VisitorProfile = {
@@ -34,6 +26,7 @@ type VisitorProfile = {
 
 export default function XiaolanmaoChatPage() {
   const [visitorProfile, setVisitorProfile] = useState<VisitorProfile>(() => createVisitorProfile())
+  const [viewportHeight, setViewportHeight] = useState("100dvh")
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -42,7 +35,6 @@ export default function XiaolanmaoChatPage() {
       role: "assistant",
       content:
         "你好，我是小蓝帽 AI 体重管理顾问。你可以直接说身高、体重和目标体重，我会先判断适合怎么咨询；也可以问价格、效果、安全和反弹问题。",
-      suggestedQuestions: starterQuestions,
     },
   ])
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -53,13 +45,36 @@ export default function XiaolanmaoChatPage() {
     messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" })
   }, [messages, pending])
 
+  useEffect(() => {
+    function updateViewportHeight() {
+      const height = window.visualViewport?.height ?? window.innerHeight
+      setViewportHeight(`${Math.round(height)}px`)
+    }
+
+    updateViewportHeight()
+    window.visualViewport?.addEventListener("resize", updateViewportHeight)
+    window.visualViewport?.addEventListener("scroll", updateViewportHeight)
+    window.addEventListener("resize", updateViewportHeight)
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", updateViewportHeight)
+      window.visualViewport?.removeEventListener("scroll", updateViewportHeight)
+      window.removeEventListener("resize", updateViewportHeight)
+    }
+  }, [])
+
   async function sendMessage(text: string) {
     const content = text.trim()
     if (!content || pending) return
 
-    const currentVisitor = createVisitorProfile()
-    setVisitorProfile(currentVisitor)
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content }])
+    const currentVisitor = visitorProfile
+    const assistantMessageId = crypto.randomUUID()
+
+    setMessages((current) => [
+      ...current,
+      { id: crypto.randomUUID(), role: "user", content },
+      { id: assistantMessageId, role: "assistant", content: "" },
+    ])
     setInput("")
     setPending(true)
     setError(null)
@@ -67,7 +82,7 @@ export default function XiaolanmaoChatPage() {
     try {
       const response = await fetch(resolveApiPath("/xiaolanmao-chat"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
         body: JSON.stringify({
           nickname: currentVisitor.nickname,
           user_id: currentVisitor.userId,
@@ -76,29 +91,29 @@ export default function XiaolanmaoChatPage() {
       })
 
       if (!response.ok) throw new Error(`请求失败：${response.status}`)
-
-      const result = (await response.json()) as ChatResponse
-      setConversationId(result.conversation_id)
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: result.answer,
-          suggestedQuestions: result.suggested_questions?.length
-            ? result.suggested_questions
-            : ["我适合买几套？", "效果一般多久能看到？", "可以转人工下单吗？"],
+      await readChatStream(response, {
+        onMeta: (conversationId) => setConversationId(conversationId),
+        onDelta: (delta) => {
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === assistantMessageId ? { ...message, content: `${message.content}${delta}` } : message,
+            ),
+          )
         },
-      ])
+      })
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === assistantMessageId && !message.content
+            ? { ...message, content: "我已收到你的问题，正在整理回答。" }
+            : message,
+        ),
+      )
     } catch (sendError) {
       setError(sendError instanceof Error ? sendError.message : "发送失败，请稍后再试")
       setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "抱歉，刚才没有成功连接小蓝帽客服工作流。你可以稍后再试，或直接联系人工顾问。",
-        },
+        ...current.filter((message) => message.id !== assistantMessageId),
+        { id: assistantMessageId, role: "assistant", content: "抱歉，刚才没有成功连接小蓝帽客服工作流。你可以稍后再试，或直接联系人工顾问。" },
       ])
     } finally {
       setPending(false)
@@ -111,7 +126,7 @@ export default function XiaolanmaoChatPage() {
   }
 
   return (
-    <main className="flex h-[100dvh] w-full bg-gray-100 text-gray-900">
+    <main className="flex w-full overflow-hidden bg-gray-100 text-gray-900" style={{ height: viewportHeight }}>
       <section className="flex flex-1 justify-center bg-gray-100">
         <div className="relative flex h-full w-full max-w-md flex-col bg-white shadow-xl">
           <div className="z-10 flex h-14 shrink-0 items-center bg-indigo-600 px-4 text-white">
@@ -136,10 +151,10 @@ export default function XiaolanmaoChatPage() {
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4">
             {messages.map((message) => (
-              <ChatBubble key={message.id} message={message} disabled={pending} onSuggestionClick={sendMessage} />
+              <ChatBubble key={message.id} message={message} />
             ))}
 
-            {pending && (
+            {pending && messages.at(-1)?.role !== "assistant" && (
               <div className="flex max-w-[85%] gap-2">
                 <Avatar role="assistant" />
                 <div className="rounded-2xl rounded-tl-none border border-gray-100 bg-white p-3 text-gray-500 shadow-sm">
@@ -151,23 +166,11 @@ export default function XiaolanmaoChatPage() {
           </div>
 
           <div className="shrink-0 border-t border-gray-200 bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-            <div className="flex gap-2 overflow-x-auto pb-3">
-              {starterQuestions.map((question) => (
-                <button
-                  className="whitespace-nowrap rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
-                  disabled={pending}
-                  key={question}
-                  onClick={() => void sendMessage(question)}
-                  type="button"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
             <form className="flex items-center gap-2" onSubmit={handleSubmit}>
               <input
                 className="h-11 min-w-0 flex-1 rounded-full border border-transparent bg-gray-50 px-4 text-base outline-none transition-colors placeholder:text-gray-500 focus:border-indigo-500 focus:bg-white focus:ring-3 focus:ring-indigo-500/15 md:text-sm"
                 disabled={pending}
+                onFocus={() => window.setTimeout(() => messagesEndRef.current?.scrollIntoView({ block: "end" }), 80)}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="输入您的问题..."
                 value={input}
@@ -218,10 +221,6 @@ export default function XiaolanmaoChatPage() {
             </ul>
           </div>
 
-          <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-3">
-            <p className="text-sm font-semibold text-indigo-700">演示提示</p>
-            <p className="mt-1 text-sm leading-6 text-indigo-700">建议先发“165，160斤，想瘦到120”，再追问价格或反弹。</p>
-          </div>
         </div>
 
         <div className="border-t border-gray-200 bg-gray-50 p-6">
@@ -235,16 +234,11 @@ export default function XiaolanmaoChatPage() {
 }
 
 function ChatBubble({
-  disabled,
   message,
-  onSuggestionClick,
 }: {
-  disabled: boolean
   message: ChatMessage
-  onSuggestionClick: (question: string) => Promise<void>
 }) {
   const isUser = message.role === "user"
-  const showSuggestions = !isUser && message.suggestedQuestions && message.suggestedQuestions.length > 0
 
   return (
     <div className={`flex max-w-[85%] gap-2 ${isUser ? "ml-auto flex-row-reverse" : ""}`}>
@@ -257,23 +251,13 @@ function ChatBubble({
               : "rounded-tl-none border border-gray-100 bg-white text-gray-800"
           }`}
         >
-          {message.content}
+          {message.content || (
+            <span className="inline-flex items-center gap-2 text-gray-500">
+              <Loader2 className="size-3.5 animate-spin" />
+              正在回复
+            </span>
+          )}
         </div>
-        {showSuggestions && (
-          <div className="flex w-full flex-wrap gap-2">
-            {message.suggestedQuestions?.slice(0, 3).map((question) => (
-              <button
-                className="min-h-9 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-left text-xs leading-snug text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
-                disabled={disabled}
-                key={question}
-                onClick={() => void onSuggestionClick(question)}
-                type="button"
-              >
-                {question}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {isUser && <Avatar role="user" />}
     </div>
@@ -312,6 +296,78 @@ function CapabilityItem({ text }: { text: string }) {
       <span>{text}</span>
     </li>
   )
+}
+
+async function readChatStream(
+  response: Response,
+  handlers: {
+    onMeta: (conversationId: string) => void
+    onDelta: (delta: string) => void
+  },
+) {
+  const contentType = response.headers.get("Content-Type") ?? ""
+
+  if (!contentType.includes("text/event-stream")) {
+    const result = (await response.json()) as { conversation_id?: string; answer?: string }
+    if (result.conversation_id) handlers.onMeta(result.conversation_id)
+    if (result.answer) handlers.onDelta(result.answer)
+    return
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) return
+
+  const decoder = new TextDecoder()
+  let buffer = ""
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const blocks = buffer.split(/\n\n+/)
+    buffer = blocks.pop() ?? ""
+
+    for (const block of blocks) {
+      handleStreamBlock(block, handlers)
+    }
+  }
+
+  if (buffer.trim()) {
+    handleStreamBlock(buffer, handlers)
+  }
+}
+
+function handleStreamBlock(
+  block: string,
+  handlers: {
+    onMeta: (conversationId: string) => void
+    onDelta: (delta: string) => void
+  },
+) {
+  const lines = block.split(/\r?\n/)
+  const event =
+    lines
+      .find((line) => line.startsWith("event:"))
+      ?.slice("event:".length)
+      .trim() || "message"
+  const dataText = lines
+    .filter((line) => line.startsWith("data:"))
+    .map((line) => line.slice("data:".length).trim())
+    .join("\n")
+
+  if (!dataText || dataText === "[DONE]") return
+
+  let data: { content?: string; conversation_id?: string; message?: string } = {}
+  try {
+    data = JSON.parse(dataText)
+  } catch {
+    data = { content: dataText }
+  }
+
+  if (event === "meta" && data.conversation_id) handlers.onMeta(data.conversation_id)
+  if (event === "delta" && data.content) handlers.onDelta(data.content)
+  if (event === "error") throw new Error(data.message ?? "流式回复失败")
 }
 
 function createVisitorProfile(): VisitorProfile {
