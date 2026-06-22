@@ -97,6 +97,75 @@ const summaryTone = {
     "border-amber-200 bg-amber-50 text-amber-950 [&_p:first-child]:text-amber-700 [&_p:last-child]:text-amber-700",
 } as const
 
+const headerTone = {
+  default: {
+    row: "border-slate-200 bg-white",
+    icon: "bg-indigo-50 text-indigo-700",
+    title: "text-slate-950",
+    description: "text-slate-600",
+  },
+  indigo: {
+    row: "border-indigo-100 bg-gradient-to-r from-indigo-50 to-white",
+    icon: "bg-indigo-600 text-white",
+    title: "text-indigo-950",
+    description: "text-indigo-700",
+  },
+  emerald: {
+    row: "border-emerald-100 bg-gradient-to-r from-emerald-50 to-white",
+    icon: "bg-emerald-600 text-white",
+    title: "text-emerald-950",
+    description: "text-emerald-700",
+  },
+  amber: {
+    row: "border-amber-100 bg-gradient-to-r from-amber-50 to-white",
+    icon: "bg-amber-500 text-white",
+    title: "text-amber-950",
+    description: "text-amber-700",
+  },
+  rose: {
+    row: "border-rose-100 bg-gradient-to-r from-rose-50 to-white",
+    icon: "bg-rose-600 text-white",
+    title: "text-rose-950",
+    description: "text-rose-700",
+  },
+  sky: {
+    row: "border-sky-100 bg-gradient-to-r from-sky-50 to-white",
+    icon: "bg-sky-600 text-white",
+    title: "text-sky-950",
+    description: "text-sky-700",
+  },
+  violet: {
+    row: "border-violet-100 bg-gradient-to-r from-violet-50 to-white",
+    icon: "bg-violet-600 text-white",
+    title: "text-violet-950",
+    description: "text-violet-700",
+  },
+  slate: {
+    row: "border-slate-200 bg-gradient-to-r from-slate-50 to-white",
+    icon: "bg-slate-800 text-white",
+    title: "text-slate-950",
+    description: "text-slate-600",
+  },
+} as const
+
+const titleTone = {
+  default: { title: "text-slate-950", description: "text-slate-600" },
+  indigo: { title: "text-indigo-950", description: "text-indigo-700" },
+  emerald: { title: "text-emerald-950", description: "text-emerald-700" },
+  amber: { title: "text-amber-950", description: "text-amber-700" },
+  rose: { title: "text-rose-950", description: "text-rose-700" },
+  sky: { title: "text-sky-950", description: "text-sky-700" },
+  violet: { title: "text-violet-950", description: "text-violet-700" },
+  slate: { title: "text-slate-950", description: "text-slate-600" },
+} as const
+
+const panelShell = "rounded-xl border border-slate-200 bg-white"
+const tableHeadRow = "border-b border-slate-200 bg-slate-50 text-xs text-slate-600"
+const tableRow = "border-b border-slate-200 last:border-0 hover:bg-indigo-50/40"
+const mutedCell = "text-slate-600"
+const strongCell = "font-semibold text-slate-950"
+const actionLink = "font-medium text-indigo-700 hover:text-indigo-900"
+
 export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
   const metrics = [
     {
@@ -189,7 +258,7 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
 
 export function EffectOverviewPanel({ overview }: { overview: AdminOverview | null }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
+    <div className={panelShell}>
       <PanelHeader
         title="今日客服效果总览"
         description="客户最关心 AI 今天接待了多少人、筛出了多少线索"
@@ -228,20 +297,23 @@ export function FunnelPanel({ overview }: { overview: AdminOverview | null }) {
   const max = Math.max(1, funnel[0]?.value ?? 0)
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="线索转化漏斗" description="从咨询到成交，定位哪一环需要优化话术" icon={BarChart3} />
+    <div className={panelShell}>
+      <PanelHeader title="线索转化漏斗" description="从咨询到成交，定位哪一环需要优化话术" icon={BarChart3} accent="violet" />
       <div className="space-y-3 p-4">
-        {funnel.map((step) => (
-          <div key={step.key} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+        {funnel.map((step, index) => (
+          <div key={step.key} className="rounded-lg border border-violet-100 bg-violet-50/40 p-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">{step.label}</p>
-                <p className="mt-0.5 text-xs text-gray-500">占总咨询 {step.rate}% · 上一步转化 {step.previousRate}%</p>
+                <p className="text-sm font-semibold text-violet-950">{step.label}</p>
+                <p className="mt-0.5 text-xs text-violet-700">占总咨询 {step.rate}% · 上一步转化 {step.previousRate}%</p>
               </div>
-              <p className="text-lg font-semibold text-gray-900">{step.value}</p>
+              <p className="text-lg font-semibold text-violet-950">{step.value}</p>
             </div>
-            <div className="mt-3 h-2 rounded-full bg-gray-200">
-              <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.max(3, (step.value / max) * 100)}%` }} />
+            <div className="mt-3 h-2 rounded-full bg-violet-100">
+              <div
+                className={`h-full rounded-full ${index < 3 ? "bg-violet-600" : "bg-emerald-500"}`}
+                style={{ width: `${Math.max(3, (step.value / max) * 100)}%` }}
+              />
             </div>
           </div>
         ))}
@@ -253,12 +325,12 @@ export function FunnelPanel({ overview }: { overview: AdminOverview | null }) {
 
 export function HighIntentLeadsPanel({ leads }: { leads: AdminLead[] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="高意向客户列表" description="每天优先跟进这些客户，减少销售漏单" icon={UserRoundCheck} />
+    <div className={panelShell}>
+      <PanelHeader title="高意向客户列表" description="每天优先跟进这些客户，减少销售漏单" icon={UserRoundCheck} accent="emerald" />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1120px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 text-xs text-gray-500">
+            <tr className={tableHeadRow}>
               <th className="px-4 py-3 font-medium">客户</th>
               <th className="px-4 py-3 font-medium">等级</th>
               <th className="px-4 py-3 font-medium">最近问题</th>
@@ -272,20 +344,20 @@ export function HighIntentLeadsPanel({ leads }: { leads: AdminLead[] }) {
           </thead>
           <tbody>
             {leads.map((lead) => (
-              <tr key={lead.id} className="border-b border-gray-200 last:border-0 hover:bg-gray-50">
-                <td className="whitespace-nowrap px-4 py-3 font-medium">{lead.name ?? lead.conversation?.visitorId ?? "未知客户"}</td>
+              <tr key={lead.id} className={tableRow}>
+                <td className={`whitespace-nowrap px-4 py-3 ${strongCell}`}>{lead.name ?? lead.conversation?.visitorId ?? "未知客户"}</td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-indigo-600/10 px-2 text-xs font-semibold text-indigo-600">
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-semibold text-emerald-700">
                     {lead.intentGrade ?? "待判定"}
                   </span>
                 </td>
-                <td className="max-w-[220px] truncate px-4 py-3 text-gray-500">{lead.lastQuestion ?? lead.conversation?.latestMessage ?? "-"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-500">{[lead.height, lead.weight, lead.targetWeight].filter(Boolean).join(" / ") || "-"}</td>
-                <td className="max-w-[180px] truncate px-4 py-3 text-gray-500">{lead.mainConcern ?? lead.demand ?? "-"}</td>
-                <td className="max-w-[160px] truncate px-4 py-3 text-gray-500">{lead.recommendedPackage ?? "-"}</td>
-                <td className="max-w-[180px] truncate px-4 py-3 text-gray-500">{lead.nextAction ?? "-"}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDateTime(lead.updatedAt)}</td>
-                <td className="max-w-[220px] truncate px-4 py-3 text-gray-900">{lead.followUpSuggestion ?? "继续补齐需求信息"}</td>
+                <td className={`max-w-[220px] truncate px-4 py-3 ${mutedCell}`}>{lead.lastQuestion ?? lead.conversation?.latestMessage ?? "-"}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${mutedCell}`}>{[lead.height, lead.weight, lead.targetWeight].filter(Boolean).join(" / ") || "-"}</td>
+                <td className={`max-w-[180px] truncate px-4 py-3 ${mutedCell}`}>{lead.mainConcern ?? lead.demand ?? "-"}</td>
+                <td className={`max-w-[160px] truncate px-4 py-3 ${mutedCell}`}>{lead.recommendedPackage ?? "-"}</td>
+                <td className={`max-w-[180px] truncate px-4 py-3 ${mutedCell}`}>{lead.nextAction ?? "-"}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${mutedCell}`}>{formatDateTime(lead.updatedAt)}</td>
+                <td className="max-w-[220px] truncate px-4 py-3 font-medium text-emerald-800">{lead.followUpSuggestion ?? "继续补齐需求信息"}</td>
               </tr>
             ))}
           </tbody>
@@ -303,34 +375,37 @@ export function ConcernPanel({ overview }: { overview: AdminOverview | null }) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <PanelHeader title="客户主要问题和顾虑" description="用真实咨询反推客服话术、短视频和小红书选题" icon={CircleHelp} />
+      <div className={panelShell}>
+        <PanelHeader title="客户主要问题和顾虑" description="用真实咨询反推客服话术、短视频和小红书选题" icon={CircleHelp} accent="amber" />
         <div className="space-y-3 p-4">
-          {ranking.map((item) => (
-            <div key={item.key} className="grid gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 md:grid-cols-[120px_1fr_auto] md:items-center">
+          {ranking.map((item, index) => (
+            <div key={item.key} className="grid gap-3 rounded-lg border border-amber-100 bg-amber-50/35 p-3 md:grid-cols-[120px_1fr_auto] md:items-center">
               <div>
-                <p className="font-medium text-gray-900">{item.label}</p>
-                <p className="text-xs text-gray-500">{item.count} 次</p>
+                <p className="font-semibold text-amber-950">{item.label}</p>
+                <p className="text-xs text-amber-700">{item.count} 次</p>
               </div>
               <div>
-                <div className="h-2 rounded-full bg-gray-200">
-                  <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.max(3, (item.count / max) * 100)}%` }} />
+                <div className="h-2 rounded-full bg-amber-100">
+                  <div
+                    className={`h-full rounded-full ${index < 2 ? "bg-amber-500" : "bg-indigo-500"}`}
+                    style={{ width: `${Math.max(3, (item.count / max) * 100)}%` }}
+                  />
                 </div>
-                <p className="mt-2 truncate text-xs text-gray-500">{item.examples[0] ?? "暂无高频原话"}</p>
+                <p className="mt-2 truncate text-xs text-amber-800">{item.examples[0] ?? "暂无高频原话"}</p>
               </div>
-              <Button variant="outline" className="bg-transparent">查看原话</Button>
+              <Button variant="outline" className="border-amber-200 bg-white text-amber-800 hover:bg-amber-50">查看原话</Button>
             </div>
           ))}
           {ranking.length === 0 && <EmptyLine text="暂无顾虑统计，聊天记录同步后会自动汇总。" />}
         </div>
       </div>
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <PanelHeader title="高频原话" description="客户反复问的问题" icon={MessageSquareText} />
-        <div className="divide-y divide-gray-200">
+      <div className={panelShell}>
+        <PanelHeader title="高频原话" description="客户反复问的问题" icon={MessageSquareText} accent="sky" />
+        <div className="divide-y divide-slate-200">
           {hotQuestions.map((item) => (
-            <div key={item.question} className="p-4">
-              <p className="text-sm font-medium text-gray-900">{item.question}</p>
-              <p className="mt-1 text-xs text-gray-500">出现 {item.count} 次</p>
+            <div key={item.question} className="p-4 hover:bg-sky-50/50">
+              <p className="text-sm font-semibold text-slate-950">{item.question}</p>
+              <p className="mt-1 text-xs text-sky-700">出现 {item.count} 次</p>
             </div>
           ))}
           {hotQuestions.length === 0 && <EmptyLine text="暂无高频原话。" />}
@@ -350,12 +425,12 @@ export function SessionsPanel({
   onSelect: (id: string) => void
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="沟通记录" description="AI 已回答的问题与客户意向记录" icon={MessageSquareText} />
+    <div className={panelShell}>
+      <PanelHeader title="沟通记录" description="AI 已回答的问题与客户意向记录" icon={MessageSquareText} accent="sky" />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[860px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 text-xs text-gray-500">
+            <tr className={tableHeadRow}>
               <th className="px-4 py-3 font-medium">访客</th>
               <th className="px-4 py-3 font-medium">客户问题</th>
               <th className="px-4 py-3 font-medium">意向等级</th>
@@ -370,12 +445,12 @@ export function SessionsPanel({
               <tr
                 key={item.id}
                 onClick={() => onSelect(item.id)}
-                className={`cursor-pointer border-b border-gray-200 last:border-0 hover:bg-gray-50/70 ${
-                  selectedId === item.id ? "bg-gray-50" : ""
+                className={`cursor-pointer border-b border-slate-200 last:border-0 hover:bg-sky-50/50 ${
+                  selectedId === item.id ? "bg-indigo-50/70" : ""
                 }`}
               >
-                <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{item.visitorId}</td>
-                <td className="max-w-[260px] truncate px-4 py-3 text-gray-500">
+                <td className={`whitespace-nowrap px-4 py-3 ${strongCell}`}>{item.visitorId}</td>
+                <td className={`max-w-[260px] truncate px-4 py-3 ${mutedCell}`}>
                   {item.latestMessage ?? item.messages?.[0]?.content ?? "-"}
                 </td>
                 <td className="px-4 py-3">
@@ -384,9 +459,9 @@ export function SessionsPanel({
                 <td className="px-4 py-3">
                   <StatusBadge status={item.status} />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-500">{item.channel}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-gray-500">{formatDateTime(item.updatedAt)}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-indigo-600">查看</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${mutedCell}`}>{item.channel}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${mutedCell}`}>{formatDateTime(item.updatedAt)}</td>
+                <td className={`whitespace-nowrap px-4 py-3 ${actionLink}`}>查看</td>
               </tr>
             ))}
           </tbody>
@@ -400,26 +475,26 @@ export function SessionsPanel({
 export function ConversationInsight({ session }: { session: AdminConversation | null }) {
   if (!session) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <p className="text-sm font-medium text-gray-900">客户画像与 AI 分析</p>
-        <p className="mt-2 text-sm text-gray-500">选择一条会话后查看详情。</p>
+      <div className={`${panelShell} p-5`}>
+        <p className="text-sm font-semibold text-slate-950">客户画像与 AI 分析</p>
+        <p className="mt-2 text-sm text-slate-600">选择一条会话后查看详情。</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="客户画像与 AI 分析" description="选中会话的实时洞察" icon={Database} />
+    <div className={panelShell}>
+      <PanelHeader title="客户画像与 AI 分析" description="选中会话的实时洞察" icon={Database} accent="indigo" />
       <div className="space-y-4 p-4">
         <KeyValue label="访客 ID" value={session.visitorId} />
         <KeyValue label="来源渠道" value={session.channel} />
         <KeyValue label="意向等级" value={intentLabel(session.intentLevel)} />
         <KeyValue label="当前状态" value={statusLabel(session.status)} />
         <div>
-          <p className="mb-2 text-sm text-gray-500">关注点标签</p>
+          <p className="mb-2 text-sm font-medium text-slate-700">关注点标签</p>
           <div className="flex flex-wrap gap-2">
             {(session.lead?.tags.length ? session.lead.tags : ["待分析"]).map((tag) => (
-              <span key={tag} className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs">
+              <span key={tag} className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
                 {tag}
               </span>
             ))}
@@ -435,12 +510,12 @@ export function ConversationInsight({ session }: { session: AdminConversation | 
 
 export function LeadsPanel({ leads }: { leads: AdminLead[] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="客户线索" description="AI 识别出来需要跟进的潜在客户" icon={UserRoundCheck} />
+    <div className={panelShell}>
+      <PanelHeader title="客户线索" description="AI 识别出来需要跟进的潜在客户" icon={UserRoundCheck} accent="emerald" />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 text-xs text-gray-500">
+            <tr className={tableHeadRow}>
               <th className="px-4 py-3 font-medium">客户</th>
               <th className="px-4 py-3 font-medium">来源</th>
               <th className="px-4 py-3 font-medium">关注点</th>
@@ -451,17 +526,17 @@ export function LeadsPanel({ leads }: { leads: AdminLead[] }) {
           </thead>
           <tbody>
             {leads.map((lead) => (
-              <tr key={lead.id} className="border-b border-gray-200 last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium">{lead.name ?? lead.conversation?.visitorId ?? "未知客户"}</td>
-                <td className="px-4 py-3 text-gray-500">{lead.targetChannel ?? lead.conversation?.channel ?? "Coze"}</td>
-                <td className="max-w-[260px] truncate px-4 py-3 text-gray-500">{lead.demand ?? "-"}</td>
+              <tr key={lead.id} className={tableRow}>
+                <td className={`px-4 py-3 ${strongCell}`}>{lead.name ?? lead.conversation?.visitorId ?? "未知客户"}</td>
+                <td className={`px-4 py-3 ${mutedCell}`}>{lead.targetChannel ?? lead.conversation?.channel ?? "Coze"}</td>
+                <td className={`max-w-[260px] truncate px-4 py-3 ${mutedCell}`}>{lead.demand ?? "-"}</td>
                 <td className="px-4 py-3">
                   <IntentBadge intent={lead.intentLevel} />
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={lead.followUpStatus} />
                 </td>
-                <td className="max-w-[260px] truncate px-4 py-3 text-gray-500">{lead.nextAction ?? "-"}</td>
+                <td className="max-w-[260px] truncate px-4 py-3 font-medium text-emerald-800">{lead.nextAction ?? "-"}</td>
               </tr>
             ))}
           </tbody>
@@ -474,19 +549,19 @@ export function LeadsPanel({ leads }: { leads: AdminLead[] }) {
 
 export function HandoffsPanel({ handoffs }: { handoffs: AdminConversation[] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="待跟进客户" description="高意向、风险或需要人工继续沟通的客户" icon={Headset} />
-      <div className="divide-y divide-gray-200">
+    <div className={panelShell}>
+      <PanelHeader title="待跟进客户" description="高意向、风险或需要人工继续沟通的客户" icon={Headset} accent="rose" />
+      <div className="divide-y divide-slate-200">
         {handoffs.map((item) => (
-          <div key={item.id} className="grid gap-3 p-4 md:grid-cols-[1fr_auto] md:items-center">
+          <div key={item.id} className="grid gap-3 p-4 hover:bg-rose-50/40 md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">{item.visitorId}</p>
+                <p className="font-semibold text-slate-950">{item.visitorId}</p>
                 <StatusBadge status={item.status} />
                 <IntentBadge intent={item.intentLevel} />
               </div>
-              <p className="mt-2 text-sm text-gray-500">{item.latestMessage ?? "-"}</p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className={`mt-2 text-sm ${mutedCell}`}>{item.latestMessage ?? "-"}</p>
+              <p className="mt-1 text-xs text-rose-700">
                 原因：{item.handoffEvents?.[0]?.reason ?? "AI 判断需要人工确认"}
               </p>
             </div>
@@ -501,17 +576,17 @@ export function HandoffsPanel({ handoffs }: { handoffs: AdminConversation[] }) {
 
 export function MissedPanel({ questions }: { questions: AdminMissedQuestion[] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="未命中问题" description="AI 没有答好的问题，用来补充客户知识库" icon={CircleHelp} />
-      <div className="divide-y divide-gray-200">
+    <div className={panelShell}>
+      <PanelHeader title="未命中问题" description="AI 没有答好的问题，用来补充客户知识库" icon={CircleHelp} accent="rose" />
+      <div className="divide-y divide-slate-200">
         {questions.map((item) => (
-          <div key={item.id} className="grid gap-3 p-4 md:grid-cols-[1fr_auto]">
+          <div key={item.id} className="grid gap-3 p-4 hover:bg-rose-50/40 md:grid-cols-[1fr_auto]">
             <div className="min-w-0">
-              <p className="font-medium">{item.question}</p>
-              <p className="mt-1 text-sm text-gray-500">{item.reason ?? "等待分析原因"}</p>
-              <p className="mt-1 text-xs text-gray-500">建议：{item.suggestedAnswer ?? "补充标准答案"}</p>
+              <p className="font-semibold text-slate-950">{item.question}</p>
+              <p className="mt-1 text-sm text-slate-600">{item.reason ?? "等待分析原因"}</p>
+              <p className="mt-1 text-xs text-rose-700">建议：{item.suggestedAnswer ?? "补充标准答案"}</p>
             </div>
-            <Button variant="outline" className="bg-transparent">
+            <Button variant="outline" className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50">
               <Plus className="h-4 w-4" />
               补充答案
             </Button>
@@ -561,10 +636,10 @@ export function KnowledgePanel({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <PanelHeader title="新增知识" description="把标准问答同步给 AI 客服" icon={Plus} />
+      <div className={panelShell}>
+        <PanelHeader title="新增知识" description="把标准问答同步给 AI 客服" icon={Plus} accent="emerald" />
         {readOnly && (
-          <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-500">
+          <div className="border-b border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800">
             演示后台为只读模式，真实知识库维护请在内部后台或数据库中操作。
           </div>
         )}
@@ -599,29 +674,29 @@ export function KnowledgePanel({
             rows={6}
             disabled={readOnly}
           />
-          {message && <p className="text-sm text-gray-500">{message}</p>}
+          {message && <p className="text-sm text-emerald-700">{message}</p>}
           <Button className="w-full" disabled={saving || readOnly}>
             {readOnly ? "演示模式不可保存" : saving ? "正在保存" : "保存知识"}
           </Button>
         </form>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <PanelHeader title="知识库" description="管理 AI 可引用的标准问答" icon={BookOpen} />
-        <div className="divide-y divide-gray-200">
+      <div className={panelShell}>
+        <PanelHeader title="知识库" description="管理 AI 可引用的标准问答" icon={BookOpen} accent="emerald" />
+        <div className="divide-y divide-slate-200">
           {items.map((item) => (
-            <div key={item.id} className="p-4">
+            <div key={item.id} className="p-4 hover:bg-emerald-50/35">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-medium">{item.title}</p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="font-semibold text-slate-950">{item.title}</p>
+                  <p className="mt-1 text-xs text-emerald-700">
                     {item.category} · 命中 {item.hitCount} 次 · {item.enabled ? "启用" : "停用"}
                   </p>
                 </div>
                 <StatusBadge status={item.enabled ? "AI_SERVING" : "CLOSED"} />
               </div>
-              <p className="mt-3 text-sm text-gray-500">问：{item.question}</p>
-              <p className="mt-1 text-sm text-gray-900">{item.answer}</p>
+              <p className="mt-3 text-sm text-slate-600">问：{item.question}</p>
+              <p className="mt-1 text-sm text-slate-950">{item.answer}</p>
             </div>
           ))}
           {items.length === 0 && <EmptyLine text="暂无知识库内容，先从未命中问题中补充标准答案。" />}
@@ -637,37 +712,37 @@ export function AnalyticsPanel({ overview }: { overview: AdminOverview | null })
 
   return (
     <div className="grid gap-4 xl:grid-cols-3">
-      <div className="rounded-xl border border-gray-200 bg-white p-4 xl:col-span-2">
-        <PanelTitle title="今日回答趋势" description="按时段统计 AI 回答的问题量" icon={BarChart3} />
+      <div className={`${panelShell} p-4 xl:col-span-2`}>
+        <PanelTitle title="今日回答趋势" description="按时段统计 AI 回答的问题量" tone="indigo" />
         <div className="mt-6 flex h-56 items-end justify-between gap-2">
           {trend.map((item) => (
             <div key={item.label} className="flex flex-1 flex-col items-center gap-2">
               <div className="flex w-full justify-center">
                 <div
-                  className="w-full max-w-[42px] rounded-t-md bg-indigo-600/80"
+                  className="w-full max-w-[42px] rounded-t-md bg-indigo-600"
                   style={{ height: `${Math.max(8, (item.value / max) * 190)}px` }}
                 />
               </div>
-              <span className="text-xs text-gray-500">{item.label}</span>
+              <span className="text-xs text-indigo-700">{item.label}</span>
             </div>
           ))}
         </div>
       </div>
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
-        <PanelTitle title="高意向线索来源" description="按渠道统计线索" icon={UserRoundCheck} />
+      <div className={`${panelShell} p-4`}>
+        <PanelTitle title="高意向线索来源" description="按渠道统计线索" tone="emerald" />
         <div className="mt-5 space-y-4">
           {(overview?.channelLeads ?? []).map((item) => (
             <div key={item.channel}>
               <div className="mb-1 flex justify-between text-sm">
-                <span>{item.channel}</span>
-                <span className="text-gray-500">{item.value} 条</span>
+                <span className="font-medium text-slate-800">{item.channel}</span>
+                <span className="text-emerald-700">{item.value} 条</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(100, item.value * 10)}%` }} />
+              <div className="h-2 rounded-full bg-emerald-100">
+                <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, item.value * 10)}%` }} />
               </div>
             </div>
           ))}
-          {(overview?.channelLeads ?? []).length === 0 && <p className="text-sm text-gray-500">暂无渠道线索数据。</p>}
+          {(overview?.channelLeads ?? []).length === 0 && <p className="text-sm text-slate-600">暂无渠道线索数据。</p>}
         </div>
       </div>
     </div>
@@ -685,8 +760,8 @@ export function SettingsPanel({
 }) {
   if (!merchant) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white">
-        <PanelHeader title="系统设置" description="商户资料、接待话术和 Coze 配置" icon={Settings} />
+      <div className={panelShell}>
+        <PanelHeader title="系统设置" description="商户资料、接待话术和 Coze 配置" icon={Settings} accent="slate" />
         <EmptyLine text="正在准备系统设置。" />
       </div>
     )
@@ -737,10 +812,10 @@ function SettingsForm({
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
-      <PanelHeader title="系统设置" description="商户资料、接待话术和 Coze 配置" icon={Settings} />
+    <div className={panelShell}>
+      <PanelHeader title="系统设置" description="商户资料、接待话术和 Coze 配置" icon={Settings} accent="slate" />
       {readOnly && (
-        <div className="border-b border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-500">
+        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
           演示后台只展示脱敏配置，真实配置不会暴露给访客。
         </div>
       )}
@@ -772,7 +847,7 @@ function SettingsForm({
           />
         </div>
         <div className="flex items-center justify-between gap-3 md:col-span-2">
-          <p className="text-sm text-gray-500">{message ?? (readOnly ? "当前为演示模式，不能修改真实配置。" : "保存后新会话会使用最新接待配置。")}</p>
+          <p className="text-sm text-slate-600">{message ?? (readOnly ? "当前为演示模式，不能修改真实配置。" : "保存后新会话会使用最新接待配置。")}</p>
           <Button disabled={saving || readOnly}>{readOnly ? "演示模式不可保存" : saving ? "正在保存" : "保存设置"}</Button>
         </div>
       </form>
@@ -789,33 +864,36 @@ function PanelHeader({
   title: string
   description: string
   icon: ComponentType<SVGProps<SVGSVGElement>>
-  accent?: "default" | "indigo"
+  accent?: keyof typeof headerTone
 }) {
+  const tone = headerTone[accent]
+
   return (
-    <div
-      className={`flex items-center gap-2 border-b p-4 ${
-        accent === "indigo"
-          ? "border-indigo-100 bg-gradient-to-r from-indigo-50 to-white"
-          : "border-gray-200"
-      }`}
-    >
-      <span
-        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-          accent === "indigo" ? "bg-indigo-600 text-white" : "bg-indigo-600/10 text-indigo-600"
-        }`}
-      >
+    <div className={`flex items-center gap-2 border-b p-4 ${tone.row}`}>
+      <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${tone.icon}`}>
         <Icon className="h-4 w-4" />
       </span>
-      <PanelTitle title={title} description={description} icon={null} />
+      <PanelTitle title={title} description={description} tone={accent} />
     </div>
   )
 }
 
-function PanelTitle({ title, description }: { title: string; description: string; icon?: unknown }) {
+function PanelTitle({
+  title,
+  description,
+  tone = "default",
+}: {
+  title: string
+  description: string
+  icon?: unknown
+  tone?: keyof typeof titleTone
+}) {
+  const color = titleTone[tone]
+
   return (
     <div>
-      <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-      <p className="text-sm text-gray-500">{description}</p>
+      <h2 className={`text-base font-semibold ${color.title}`}>{title}</h2>
+      <p className={`text-sm ${color.description}`}>{description}</p>
     </div>
   )
 }
@@ -842,24 +920,24 @@ function SummaryTile({
 
 function KeyValue({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className="min-w-0 truncate text-sm font-medium text-gray-900">{value}</span>
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-indigo-100 bg-indigo-50/45 px-3 py-2.5">
+      <span className="text-sm text-indigo-700">{label}</span>
+      <span className="min-w-0 truncate text-sm font-semibold text-indigo-950">{value}</span>
     </div>
   )
 }
 
 function InfoBox({ title, text, accent = false }: { title: string; text: string; accent?: boolean }) {
   return (
-    <div className={`rounded-lg border p-3 ${accent ? "border-indigo-200 bg-indigo-600/5" : "border-gray-200 bg-gray-100/40"}`}>
-      <p className={`mb-1 text-xs font-medium ${accent ? "text-indigo-600" : "text-gray-500"}`}>{title}</p>
-      <p className="text-sm leading-relaxed text-gray-900">{text}</p>
+    <div className={`rounded-lg border p-3 ${accent ? "border-emerald-200 bg-emerald-50" : "border-sky-200 bg-sky-50/50"}`}>
+      <p className={`mb-1 text-xs font-medium ${accent ? "text-emerald-700" : "text-sky-700"}`}>{title}</p>
+      <p className="text-sm leading-relaxed text-slate-950">{text}</p>
     </div>
   )
 }
 
 function EmptyLine({ text }: { text: string }) {
-  return <div className="p-6 text-center text-sm text-gray-500">{text}</div>
+  return <div className="p-6 text-center text-sm text-slate-600">{text}</div>
 }
 
 function TextField({
@@ -877,9 +955,9 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-gray-900">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-900">{label}</span>
       <input
-        className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm outline-none transition-colors placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
+        className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition-colors placeholder:text-slate-500 disabled:bg-slate-50 disabled:text-slate-500 focus:border-indigo-500 focus:bg-white focus:ring-3 focus:ring-indigo-500/15"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         required={required}
@@ -906,9 +984,9 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-gray-900">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-slate-900">{label}</span>
       <textarea
-        className="w-full resize-y rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-gray-500 disabled:bg-gray-50 disabled:text-gray-500 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
+        className="w-full resize-y rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-slate-500 disabled:bg-slate-50 disabled:text-slate-500 focus:border-indigo-500 focus:bg-white focus:ring-3 focus:ring-indigo-500/15"
         rows={rows}
         value={value}
         onChange={(event) => onChange(event.target.value)}

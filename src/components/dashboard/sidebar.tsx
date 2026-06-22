@@ -48,23 +48,23 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-gray-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-14 items-center justify-between gap-2 border-b border-gray-200 px-4">
+        <div className="flex h-14 items-center justify-between gap-2 border-b border-slate-200 bg-gradient-to-r from-indigo-50 to-white px-4">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Bot className="h-5 w-5" />
             </span>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-gray-900">即答 AI 客服</p>
-              <p className="text-xs text-gray-500">客户控制台</p>
+              <p className="text-sm font-semibold text-slate-950">即答 AI 客服</p>
+              <p className="text-xs text-indigo-700">客户控制台</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-gray-500 hover:bg-gray-100 lg:hidden"
+            className="rounded-md p-1 text-slate-500 hover:bg-indigo-50 hover:text-indigo-700 lg:hidden"
             aria-label="关闭菜单"
           >
             <X className="h-5 w-5" />
@@ -86,8 +86,8 @@ export function Sidebar({
                 }}
                 className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium transition-colors ${
                   activeItem
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-700"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -98,8 +98,8 @@ export function Sidebar({
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs ${
                       activeItem
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-white/20 text-white"
+                        : "bg-amber-50 text-amber-700"
                     }`}
                   >
                     {badge}
@@ -110,11 +110,11 @@ export function Sidebar({
           })}
         </nav>
 
-        <div className="border-t border-gray-200 p-4">
-          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-            <p className="mb-2 text-xs font-medium text-gray-500">当前项目</p>
-            <p className="text-sm font-semibold text-gray-900">小蓝帽减肥产品</p>
-            <p className="mt-1 text-xs text-gray-500">Coze 数据每 3 分钟同步</p>
+        <div className="border-t border-slate-200 p-4">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="mb-2 text-xs font-medium text-emerald-700">当前项目</p>
+            <p className="text-sm font-semibold text-emerald-950">小蓝帽减肥产品</p>
+            <p className="mt-1 text-xs text-emerald-700">Coze 数据每 3 分钟同步</p>
           </div>
         </div>
       </aside>

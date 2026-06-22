@@ -12,31 +12,31 @@ export const intentLevelMeta: Record<NormalizedIntentLevel, IntentMeta> = {
     grade: "A",
     label: "A 高意向用户",
     shortLabel: "高意向",
-    className: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   MEDIUM: {
     grade: "B",
     label: "B 中意向用户",
     shortLabel: "中意向",
-    className: "bg-blue-50 text-blue-700 border-blue-200",
+    className: "bg-sky-50 text-sky-700 border-sky-200",
   },
   LOW: {
     grade: "C",
     label: "C 低意向用户",
     shortLabel: "低意向",
-    className: "bg-gray-100 text-gray-600 border-gray-200",
+    className: "bg-slate-100 text-slate-600 border-slate-200",
   },
   RISK: {
     grade: "D",
     label: "D 风险用户",
     shortLabel: "风险用户",
-    className: "bg-red-50 text-red-700 border-red-200",
+    className: "bg-rose-50 text-rose-700 border-rose-200",
   },
   UNKNOWN: {
     grade: "-",
     label: "待判定",
     shortLabel: "待判定",
-    className: "bg-gray-100 text-gray-600 border-gray-200",
+    className: "bg-slate-100 text-slate-600 border-slate-200",
   },
 }
 

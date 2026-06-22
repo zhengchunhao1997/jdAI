@@ -142,7 +142,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar
         open={sidebarOpen}
         active={active}
@@ -156,7 +156,7 @@ export default function DashboardPage() {
 
         <main className="flex-1 space-y-6 overflow-y-auto p-4 md:p-6">
           {!authChecked && (
-            <div className="rounded-xl border border-gray-200 bg-white p-6 text-sm text-gray-500">正在检查登录状态...</div>
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-6 text-sm text-indigo-700">正在检查登录状态...</div>
           )}
           {authChecked && loading && <DashboardSkeleton />}
           {authChecked && error && <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>}
@@ -236,14 +236,14 @@ function DashboardSkeleton() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {Array.from({ length: 5 }).map((_, index) => (
-          <div className="rounded-xl border border-gray-200 bg-white p-4" key={index}>
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
-            <div className="mt-4 h-8 w-16 animate-pulse rounded bg-gray-100" />
-            <div className="mt-3 h-3 w-32 animate-pulse rounded bg-gray-100" />
+          <div className="rounded-xl border border-indigo-100 bg-white p-4" key={index}>
+            <div className="h-4 w-24 animate-pulse rounded bg-indigo-100" />
+            <div className="mt-4 h-8 w-16 animate-pulse rounded bg-indigo-100" />
+            <div className="mt-3 h-3 w-32 animate-pulse rounded bg-indigo-100" />
           </div>
         ))}
       </div>
-      <div className="h-72 animate-pulse rounded-xl border border-gray-200 bg-white" />
+      <div className="h-72 animate-pulse rounded-xl border border-indigo-100 bg-white" />
     </div>
   )
 }
