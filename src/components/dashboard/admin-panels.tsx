@@ -225,12 +225,7 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
         const Icon = item.icon
 
         return (
-          <div
-            key={item.label}
-            className={`group rounded-xl border p-4 transition-colors duration-200 ${tone.card} ${
-              index === 0 ? "sm:col-span-2 xl:col-span-2" : ""
-            }`}
-          >
+          <div key={item.label} className={`group rounded-xl border p-4 transition-colors duration-200 ${tone.card}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className={`text-sm font-medium ${tone.label}`}>{item.label}</p>
@@ -243,7 +238,7 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
             <div className="mt-4 flex items-end justify-between gap-3">
               <p className={`text-3xl font-semibold leading-none tracking-tight ${tone.value}`}>{item.value}</p>
               {index === 0 && (
-                <span className="hidden rounded-full bg-white/18 px-2.5 py-1 text-xs font-medium text-white/90 sm:inline-flex">
+                <span className="hidden rounded-full bg-white/18 px-2 py-1 text-xs font-medium text-white/90 2xl:inline-flex">
                   今日核心
                 </span>
               )}
