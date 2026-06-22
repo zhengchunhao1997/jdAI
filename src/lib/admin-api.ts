@@ -4,7 +4,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? ""
 
 function resolveApiPath(path: string) {
   if (apiBaseUrl) return `${apiBaseUrl}${path}`
-  return path.replace(/^\/api\//, "/backend/")
+  return path.replace(/^\/api\/admin\//, "/admin-api/")
 }
 
 export async function adminFetch<T>(path: string): Promise<T> {
