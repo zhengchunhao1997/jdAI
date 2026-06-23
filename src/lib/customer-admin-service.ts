@@ -213,30 +213,45 @@ function buildMetrics(
     ...dataset.todayEvents.map((event) => event.userId),
     ...dataset.todayLeads.map((lead) => lead.userId),
   ]).size
-  const totalMessages = dataset.todayEvents.filter(hasCustomerOrAiMessage).length
+  const totalVisitors = new Set([
+    ...dataset.events.map((event) => event.userId),
+    ...dataset.leads.map((lead) => lead.userId),
+  ]).size
+  const todayMessages = dataset.todayEvents.filter(hasCustomerOrAiMessage).length
+  const totalMessages = dataset.events.filter(hasCustomerOrAiMessage).length
   const aiReplies = dataset.todayEvents.filter((event) => Boolean(event.aiReply)).length
+  const totalAiReplies = dataset.events.filter((event) => Boolean(event.aiReply)).length
+  const totalHandoffs = buildSessions(dataset.events, dataset.leads).filter((item) => item.needFollowUp).length
+  const effectiveLeads = dataset.todayLeads.filter(isEffectiveLead).length
+  const totalEffectiveLeads = dataset.leads.filter(isEffectiveLead).length
   const paidOrPending = dataset.todayLeads.filter(isPaidOrPendingLead).length
+  const totalPaidOrPending = dataset.leads.filter(isPaidOrPendingLead).length
   const answeredQuestions = dataset.events.filter(hasCustomerOrAiMessage).length
   const resolutionBase = Math.max(1, answeredQuestions + dataset.missedQuestions.length)
 
   return {
     todayConversations: todayVisitors,
-    totalConversations: sessions.length,
+    totalConversations: totalVisitors || sessions.length,
     todayVisitors,
-    todayMessages: totalMessages,
+    todayMessages,
+    totalMessages,
     aiReplies,
+    totalAiReplies,
     humanHandoffs: handoffs.length,
-    effectiveLeads: dataset.todayLeads.filter(isEffectiveLead).length,
+    totalHumanHandoffs: totalHandoffs,
+    effectiveLeads,
+    totalEffectiveLeads,
     highIntentLeads: highIntentLeads.length,
     todayHighIntentLeads: todayHighIntentLeads.length,
     paidOrPending,
+    totalPaidOrPending,
     missedQuestions: dataset.todayMissedQuestions.length,
     totalMissedQuestions: dataset.missedQuestions.length,
     answeredQuestions,
-    todayQuestions: totalMessages,
+    todayQuestions: todayMessages,
     totalLeads: dataset.leads.length,
     timeSavedMinutes: answeredQuestions * TIME_SAVED_MINUTES_PER_MESSAGE,
-    todayTimeSavedMinutes: totalMessages * TIME_SAVED_MINUTES_PER_MESSAGE,
+    todayTimeSavedMinutes: todayMessages * TIME_SAVED_MINUTES_PER_MESSAGE,
     aiResolutionRate: Math.round(((answeredQuestions / resolutionBase) * 100) * 10) / 10,
     pendingHandoffs: handoffs.length,
   }

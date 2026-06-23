@@ -169,50 +169,50 @@ const actionLink = "font-medium text-indigo-700 hover:text-indigo-900"
 export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
   const metrics = [
     {
-      label: "今日接待人数",
-      value: overview?.metrics.todayVisitors ?? overview?.metrics.todayConversations ?? 0,
+      label: "接待人数",
+      todayValue: overview?.metrics.todayVisitors ?? overview?.metrics.todayConversations ?? 0,
+      totalValue: overview?.metrics.totalConversations ?? 0,
       icon: MessageSquareText,
-      hint: `累计客户 ${overview?.metrics.totalConversations ?? 0}`,
       emphasis: "primary",
-      note: "今日进线规模",
+      note: "进线客户规模",
     },
     {
-      label: "今日消息数",
-      value: overview?.metrics.todayMessages ?? overview?.metrics.todayQuestions ?? 0,
+      label: "消息数",
+      todayValue: overview?.metrics.todayMessages ?? overview?.metrics.todayQuestions ?? 0,
+      totalValue: overview?.metrics.totalMessages ?? overview?.metrics.answeredQuestions ?? overview?.metrics.todayMessages ?? 0,
       icon: BarChart3,
-      hint: `AI 自动回复 ${overview?.metrics.aiReplies ?? 0}`,
       emphasis: "info",
       note: "客服工作量",
     },
     {
       label: "人工接管数",
-      value: overview?.metrics.humanHandoffs ?? overview?.metrics.pendingHandoffs ?? 0,
+      todayValue: overview?.metrics.humanHandoffs ?? overview?.metrics.pendingHandoffs ?? 0,
+      totalValue: overview?.metrics.totalHumanHandoffs ?? overview?.metrics.pendingHandoffs ?? 0,
       icon: CheckCircle2,
-      hint: "需要人工成交承接",
       emphasis: "warning",
       note: "待销售跟进",
     },
     {
       label: "有效线索数",
-      value: overview?.metrics.effectiveLeads ?? overview?.metrics.totalLeads ?? 0,
+      todayValue: overview?.metrics.effectiveLeads ?? 0,
+      totalValue: overview?.metrics.totalEffectiveLeads ?? overview?.metrics.totalLeads ?? overview?.metrics.effectiveLeads ?? 0,
       icon: UserRoundCheck,
-      hint: `高意向 ${overview?.metrics.highIntentLeads ?? 0}`,
       emphasis: "success",
       note: "可转化客户",
     },
     {
       label: "已下单/待付款",
-      value: overview?.metrics.paidOrPending ?? 0,
+      todayValue: overview?.metrics.paidOrPending ?? 0,
+      totalValue: overview?.metrics.totalPaidOrPending ?? overview?.metrics.paidOrPending ?? 0,
       icon: WalletCards,
-      hint: `未命中 ${overview?.metrics.missedQuestions ?? 0}`,
       emphasis: "violet",
       note: "成交进度",
     },
     {
       label: "知识库未命中",
-      value: overview?.metrics.missedQuestions ?? 0,
+      todayValue: overview?.metrics.missedQuestions ?? 0,
+      totalValue: overview?.metrics.totalMissedQuestions ?? overview?.metrics.missedQuestions ?? 0,
       icon: AlertTriangle,
-      hint: `累计 ${overview?.metrics.totalMissedQuestions ?? overview?.metrics.missedQuestions ?? 0}`,
       emphasis: "danger",
       note: "需要补知识库",
     },
@@ -236,14 +236,22 @@ export function MetricGrid({ overview }: { overview: AdminOverview | null }) {
               </span>
             </div>
             <div className="mt-4 flex items-end justify-between gap-3">
-              <p className={`text-3xl font-semibold leading-none tracking-tight ${tone.value}`}>{item.value}</p>
+              <div>
+                <p className={`text-xs font-medium ${tone.hint}`}>今日</p>
+                <p className={`mt-1 text-3xl font-semibold leading-none tracking-tight ${tone.value}`}>{item.todayValue}</p>
+              </div>
               {index === 0 && (
                 <span className="hidden rounded-full bg-white/18 px-2 py-1 text-xs font-medium text-white/90 2xl:inline-flex">
                   今日核心
                 </span>
               )}
             </div>
-            <p className={`mt-3 text-xs ${tone.hint}`}>{item.hint}</p>
+            <div className={`mt-4 flex items-center justify-between rounded-lg px-3 py-2 text-xs ${
+              index === 0 ? "bg-white/14 text-white/90" : "bg-white/70"
+            }`}>
+              <span className={index === 0 ? "text-white/80" : tone.hint}>累计</span>
+              <span className={`font-semibold ${index === 0 ? "text-white" : tone.value}`}>{item.totalValue}</span>
+            </div>
           </div>
         )
       })}
@@ -255,8 +263,8 @@ export function EffectOverviewPanel({ overview }: { overview: AdminOverview | nu
   return (
     <div className={panelShell}>
       <PanelHeader
-        title="今日客服效果总览"
-        description="客户最关心 AI 今天接待了多少人、筛出了多少线索"
+        title="客服效果总览"
+        description="实时查看客服的工作数据"
         icon={BarChart3}
         accent="indigo"
       />

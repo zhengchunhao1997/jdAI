@@ -15,7 +15,7 @@ import {
 import type { DashboardSection } from "@/lib/admin-api"
 
 const nav = [
-  { id: "overview", label: "今日效果总览", icon: LayoutDashboard },
+  { id: "overview", label: "客服效果总览", icon: LayoutDashboard },
   { id: "analytics", label: "线索转化漏斗", icon: Filter },
   { id: "leads", label: "高意向客户", icon: Users },
   { id: "handoffs", label: "客户问题统计", icon: PieChart },

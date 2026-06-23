@@ -141,11 +141,16 @@ export type AdminOverview = {
     totalConversations: number
     todayVisitors?: number
     todayMessages?: number
+    totalMessages?: number
     aiReplies?: number
+    totalAiReplies?: number
     humanHandoffs?: number
+    totalHumanHandoffs?: number
     effectiveLeads?: number
+    totalEffectiveLeads?: number
     todayHighIntentLeads?: number
     paidOrPending?: number
+    totalPaidOrPending?: number
     totalMissedQuestions?: number
     answeredQuestions?: number
     todayQuestions?: number
