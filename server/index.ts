@@ -21,6 +21,7 @@ import {
   createKbMissQuestionRecords,
 } from "@/lib/customer-service-records"
 import { prisma } from "@/lib/prisma"
+import { createV2CustomerServiceEvent } from "@/lib/v2-customer-service-events"
 import { sendXiaolanmaoMessage } from "@/lib/xiaolanmao-chat-service"
 import { serverEnv } from "./env"
 import { handleRequest, route } from "./http"
@@ -60,6 +61,9 @@ const routes = [
   }),
   route("POST", /^\/api\/kb-miss-questions$/, async (request) => {
     return createKbMissQuestionRecords(await request.json())
+  }),
+  route("POST", /^\/api\/v2\/customer-service\/events$/, async (request) => {
+    return createV2CustomerServiceEvent(await request.json(), request.headers)
   }),
   route("POST", /^\/api\/coze-sync\/run$/, async () => {
     return runCozeSync()
