@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  useEffect,
   useState,
   type ComponentType,
   type Dispatch,
@@ -18,6 +19,8 @@ import {
   Headset,
   MessageSquareText,
   Plus,
+  RefreshCw,
+  Search,
   Settings,
   UserRoundCheck,
   WalletCards,
@@ -29,10 +32,13 @@ import {
   type AdminMerchant,
   type AdminMissedQuestion,
   type AdminOverview,
-  type KnowledgeItem,
+  type VolcKnowledgeResponse,
+  type VolcKnowledgeStatus,
   adminPost,
   formatDateTime,
   intentLabel,
+  knowledgeFetch,
+  knowledgePost,
   statusLabel,
 } from "@/lib/admin-api"
 import { IntentBadge, StatusBadge } from "./badges"
@@ -636,111 +642,360 @@ export function MissedPanel({
 }
 
 export function KnowledgePanel({
-  items,
-  onCreated,
-  readOnly = false,
+  tenantCode = "xiaolanmao",
 }: {
-  items: KnowledgeItem[]
-  onCreated: (item: KnowledgeItem) => void
-  readOnly?: boolean
+  tenantCode?: string
 }) {
-  const [form, setForm] = useState({
-    title: "",
-    category: "产品介绍",
-    question: "",
-    answer: "",
+  const [status, setStatus] = useState<VolcKnowledgeStatus | null>(null)
+  const [configForm, setConfigForm] = useState({
+    resource_id: "",
+    collection_name: "",
+    project: "default",
+    doc_id: "",
+  })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResult, setSearchResult] = useState<unknown>(null)
+  const [points, setPoints] = useState<unknown[]>([])
+  const [pointForm, setPointForm] = useState({
+    chunk_title: "",
+    content: "",
   })
   const [saving, setSaving] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState(false)
+  const [loadingPoints, setLoadingPoints] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function refreshStatus() {
+    setLoadingStatus(true)
+    setMessage(null)
+    try {
+      const result = await knowledgeFetch<VolcKnowledgeStatus>(`/api/knowledge/status?tenant_code=${tenantCode}`)
+      setStatus(result)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "知识库状态加载失败")
+    } finally {
+      setLoadingStatus(false)
+    }
+  }
+
+  async function handleSaveConfig(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (readOnly) return
     setSaving(true)
     setMessage(null)
 
     try {
-      const result = await adminPost<{ knowledgeItem: KnowledgeItem }>("/api/admin/knowledge", form)
-      onCreated(result.knowledgeItem)
-      setForm({ title: "", category: "产品介绍", question: "", answer: "" })
-      setMessage("知识库内容已新增")
+      await knowledgePost<VolcKnowledgeResponse>("/api/knowledge/tenant-config", {
+        tenant_code: tenantCode,
+        resource_id: configForm.resource_id,
+        collection_name: configForm.collection_name,
+        project: configForm.project || "default",
+        doc_id: configForm.doc_id || undefined,
+      })
+      setMessage("租户知识库配置已保存")
+      await refreshStatus()
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "知识库保存失败")
+      setMessage(error instanceof Error ? error.message : "知识库配置保存失败")
     } finally {
       setSaving(false)
     }
   }
 
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!searchQuery.trim()) return
+    setSearching(true)
+    setMessage(null)
+    try {
+      const result = await knowledgePost<VolcKnowledgeResponse>("/api/knowledge/search", {
+        tenant_code: tenantCode,
+        query: searchQuery.trim(),
+        limit: 3,
+      })
+      setSearchResult(result.data ?? result)
+      if (!result.ok) setMessage(result.error?.message ?? "火山知识库检索失败")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "知识库检索失败")
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  async function loadPoints() {
+    setLoadingPoints(true)
+    setMessage(null)
+    try {
+      const result = await knowledgePost<VolcKnowledgeResponse>("/api/knowledge/points", {
+        tenant_code: tenantCode,
+        offset: 0,
+        limit: 50,
+      })
+      const list = extractArray(result.data)
+      setPoints(list)
+      if (!result.ok) setMessage(result.error?.message ?? "切片列表加载失败")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "切片列表加载失败")
+    } finally {
+      setLoadingPoints(false)
+    }
+  }
+
+  async function handleAddPoint(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!pointForm.content.trim()) return
+    setSaving(true)
+    setMessage(null)
+    try {
+      const result = await knowledgePost<VolcKnowledgeResponse>("/api/knowledge/points-add", {
+        tenant_code: tenantCode,
+        chunk_title: pointForm.chunk_title || "标准话术",
+        content: pointForm.content,
+      })
+      if (!result.ok) {
+        setMessage(result.error?.message ?? "话术新增失败")
+        return
+      }
+      setPointForm({ chunk_title: "", content: "" })
+      setMessage("标准话术已写入火山知识库")
+      await loadPoints()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "话术新增失败")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadStatus() {
+      try {
+        const result = await knowledgeFetch<VolcKnowledgeStatus>(`/api/knowledge/status?tenant_code=${tenantCode}`)
+        if (!cancelled) setStatus(result)
+      } catch (error) {
+        if (!cancelled) setMessage(error instanceof Error ? error.message : "知识库状态加载失败")
+      }
+    }
+
+    void loadStatus()
+
+    return () => {
+      cancelled = true
+    }
+  }, [tenantCode])
+
+  const configured = Boolean(status?.resource_id_configured && status?.collection_name_configured)
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+    <div className="space-y-6">
       <div className={panelShell}>
-        <PanelHeader title="新增知识" description="把标准问答同步给 AI 客服" icon={Plus} accent="emerald" />
-        {readOnly && (
-          <div className="border-b border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800">
-            演示后台为只读模式，真实知识库维护请在内部后台或数据库中操作。
+        <PanelHeader title="知识库管理" description="按租户维护火山引擎知识库内容" icon={BookOpen} accent="emerald" />
+        <div className="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="grid gap-3 md:grid-cols-4">
+            <StatusTile label="当前租户" value={status?.tenant?.name ?? tenantCode} tone="emerald" />
+            <StatusTile label="火山 Key" value={status?.configured ? "已配置" : "未配置"} tone={status?.configured ? "emerald" : "rose"} />
+            <StatusTile label="知识库资源" value={configured ? "已绑定" : "未绑定"} tone={configured ? "emerald" : "amber"} />
+            <StatusTile label="默认文档" value={status?.default_doc_id_configured ? "已配置" : "未配置"} tone={status?.default_doc_id_configured ? "emerald" : "slate"} />
+          </div>
+          <Button variant="outline" onClick={refreshStatus} disabled={loadingStatus}>
+            <RefreshCw className={loadingStatus ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+            刷新状态
+          </Button>
+        </div>
+        {!configured && (
+          <div className="border-t border-amber-100 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+            这个租户还没有绑定火山知识库。请填写 resource_id 和 collection_name 后保存；需要新增话术时还要配置默认 doc_id。
           </div>
         )}
-        <form className="space-y-4 p-4" onSubmit={handleSubmit}>
-          <TextField
-            label="标题"
-            value={form.title}
-            onChange={(value) => setForm((current) => ({ ...current, title: value }))}
-            required
-            disabled={readOnly}
-          />
-          <TextField
-            label="分类"
-            value={form.category}
-            onChange={(value) => setForm((current) => ({ ...current, category: value }))}
-            required
-            disabled={readOnly}
-          />
-          <TextArea
-            label="客户问题"
-            value={form.question}
-            onChange={(value) => setForm((current) => ({ ...current, question: value }))}
-            required
-            rows={3}
-            disabled={readOnly}
-          />
-          <TextArea
-            label="标准答案"
-            value={form.answer}
-            onChange={(value) => setForm((current) => ({ ...current, answer: value }))}
-            required
-            rows={6}
-            disabled={readOnly}
-          />
-          {message && <p className="text-sm text-emerald-700">{message}</p>}
-          <Button className="w-full" disabled={saving || readOnly}>
-            {readOnly ? "演示模式不可保存" : saving ? "正在保存" : "保存知识"}
-          </Button>
-        </form>
       </div>
 
-      <div className={panelShell}>
-        <PanelHeader title="知识库" description="管理 AI 可引用的标准问答" icon={BookOpen} accent="emerald" />
-        <div className="divide-y divide-slate-200">
-          {items.map((item) => (
-            <div key={item.id} className="p-4 hover:bg-emerald-50/35">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-slate-950">{item.title}</p>
-                  <p className="mt-1 text-xs text-emerald-700">
-                    {item.category} · 命中 {item.hitCount} 次 · {item.enabled ? "启用" : "停用"}
-                  </p>
-                </div>
-                <StatusBadge status={item.enabled ? "AI_SERVING" : "CLOSED"} />
-              </div>
-              <p className="mt-3 text-sm text-slate-600">问：{item.question}</p>
-              <p className="mt-1 text-sm text-slate-950">{item.answer}</p>
+      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
+        <div className={panelShell}>
+          <PanelHeader title="租户知识库配置" description="每个客户绑定自己的火山知识库" icon={Settings} accent="slate" />
+          <form className="space-y-4 p-4" onSubmit={handleSaveConfig}>
+            <TextField label="租户编码" value={tenantCode} onChange={() => undefined} disabled />
+            <TextField
+              label="Resource ID"
+              value={configForm.resource_id}
+              onChange={(value) => setConfigForm((current) => ({ ...current, resource_id: value }))}
+              required
+            />
+            <TextField
+              label="Collection Name"
+              value={configForm.collection_name}
+              onChange={(value) => setConfigForm((current) => ({ ...current, collection_name: value }))}
+              required
+            />
+            <TextField
+              label="Project"
+              value={configForm.project}
+              onChange={(value) => setConfigForm((current) => ({ ...current, project: value }))}
+            />
+            <TextField
+              label="默认 Doc ID"
+              value={configForm.doc_id}
+              onChange={(value) => setConfigForm((current) => ({ ...current, doc_id: value }))}
+            />
+            <Button className="w-full" disabled={saving}>
+              {saving ? "正在保存" : "保存租户配置"}
+            </Button>
+          </form>
+        </div>
+
+        <div className={panelShell}>
+          <PanelHeader title="检索知识库" description="用真实问题测试火山返回的知识片段" icon={Search} accent="sky" />
+          <form className="flex flex-col gap-3 p-4 md:flex-row" onSubmit={handleSearch}>
+            <input
+              className="h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:ring-3 focus:ring-indigo-500/15"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="输入客户问题，例如：有副作用吗？"
+            />
+            <Button disabled={searching || !searchQuery.trim()}>
+              <Search className="h-4 w-4" />
+              {searching ? "检索中" : "检索"}
+            </Button>
+          </form>
+          <div className="border-t border-slate-200 p-4">
+            {searchResult ? (
+              <KnowledgeDebug data={searchResult} />
+            ) : (
+              <EmptyLine text="输入问题后会展示火山知识库返回的片段。" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
+        <div className={panelShell}>
+          <PanelHeader title="新增标准话术" description="写入当前租户绑定的火山知识库" icon={Plus} accent="emerald" />
+          <form className="space-y-4 p-4" onSubmit={handleAddPoint}>
+            <TextField
+              label="标题"
+              value={pointForm.chunk_title}
+              onChange={(value) => setPointForm((current) => ({ ...current, chunk_title: value }))}
+            />
+            <TextArea
+              label="标准话术原文"
+              value={pointForm.content}
+              onChange={(value) => setPointForm((current) => ({ ...current, content: value }))}
+              required
+              rows={8}
+            />
+            <Button className="w-full" disabled={saving || !pointForm.content.trim()}>
+              {saving ? "正在写入" : "写入知识库"}
+            </Button>
+          </form>
+          {message && (
+            <div className="border-t border-slate-200 px-4 py-3 text-sm leading-relaxed text-slate-700">
+              {message}
             </div>
-          ))}
-          {items.length === 0 && <EmptyLine text="暂无知识库内容，先从未命中问题中补充标准答案。" />}
+          )}
+        </div>
+
+        <div className={panelShell}>
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-white p-4">
+            <PanelTitle title="知识库切片" description="查看火山返回的当前话术片段" tone="emerald" />
+            <Button variant="outline" onClick={loadPoints} disabled={loadingPoints}>
+              <RefreshCw className={loadingPoints ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+              加载切片
+            </Button>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {points.map((item, index) => (
+              <KnowledgePointRow key={getPointKey(item, index)} item={item} />
+            ))}
+            {points.length === 0 && <EmptyLine text="点击加载切片后，会展示火山知识库中的内容。" />}
+          </div>
         </div>
       </div>
     </div>
   )
+}
+
+function StatusTile({ label, value, tone }: { label: string; value: string; tone: "emerald" | "amber" | "rose" | "slate" }) {
+  const toneClass = {
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-950 [&_p:first-child]:text-emerald-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-950 [&_p:first-child]:text-amber-700",
+    rose: "border-rose-200 bg-rose-50 text-rose-950 [&_p:first-child]:text-rose-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-950 [&_p:first-child]:text-slate-600",
+  }[tone]
+
+  return (
+    <div className={`rounded-lg border px-3 py-2 ${toneClass}`}>
+      <p className="text-xs font-medium">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+    </div>
+  )
+}
+
+function KnowledgePointRow({ item }: { item: unknown }) {
+  const record = toRecord(item)
+  const title = getFirstString(record, ["chunk_title", "title", "doc_name", "point_id"]) ?? "未命名切片"
+  const content = getFirstString(record, ["content", "chunk_content", "text", "question"]) ?? JSON.stringify(item)
+  const pointId = getFirstString(record, ["point_id", "id"])
+
+  return (
+    <div className="p-4 hover:bg-emerald-50/35">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-semibold text-slate-950">{title}</p>
+        {pointId && <span className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">{pointId}</span>}
+      </div>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{content}</p>
+    </div>
+  )
+}
+
+function KnowledgeDebug({ data }: { data: unknown }) {
+  const rows = extractArray(data)
+  if (rows.length > 0) {
+    return (
+      <div className="space-y-3">
+        {rows.slice(0, 5).map((item, index) => (
+          <KnowledgePointRow key={getPointKey(item, index)} item={item} />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <pre className="max-h-[360px] overflow-auto rounded-lg bg-slate-950 p-4 text-xs leading-relaxed text-slate-100">
+      {JSON.stringify(data, null, 2)}
+    </pre>
+  )
+}
+
+function extractArray(data: unknown): unknown[] {
+  if (Array.isArray(data)) return data
+  if (!data || typeof data !== "object") return []
+  const record = data as Record<string, unknown>
+  for (const key of ["data", "result", "items", "list", "points", "docs", "chunks"]) {
+    const value = record[key]
+    if (Array.isArray(value)) return value
+    if (value && typeof value === "object") {
+      const nested = extractArray(value)
+      if (nested.length > 0) return nested
+    }
+  }
+  return []
+}
+
+function toRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function getFirstString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === "string" && value.trim()) return value
+    if (typeof value === "number") return String(value)
+  }
+  return null
+}
+
+function getPointKey(item: unknown, index: number) {
+  const record = toRecord(item)
+  return getFirstString(record, ["point_id", "id", "chunk_id"]) ?? `point-${index}`
 }
 
 export function AnalyticsPanel({ overview }: { overview: AdminOverview | null }) {

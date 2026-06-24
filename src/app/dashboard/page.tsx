@@ -10,13 +10,14 @@ import {
   EffectOverviewPanel,
   FunnelPanel,
   HighIntentLeadsPanel,
+  KnowledgePanel,
   LeadsPanel,
   MissedPanel,
   SessionsPanel,
   SettingsPanel,
 } from "@/components/dashboard/admin-panels"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { DemoUnavailableDialog, DemoUnavailablePanel } from "@/components/dashboard/demo-unavailable"
+import { DemoUnavailableDialog } from "@/components/dashboard/demo-unavailable"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import {
   type AdminConversation,
@@ -194,7 +195,7 @@ export default function DashboardPage() {
               {active === "leads" && <LeadsPanel leads={state.leads} />}
               {active === "handoffs" && <ConcernPanel overview={state.overview} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />}
               {active === "missed" && <MissedPanel questions={state.missedQuestions} onDemoUnavailable={() => setDemoUnavailableOpen(true)} />}
-              {active === "knowledge" && <DemoUnavailablePanel onOpen={() => setDemoUnavailableOpen(true)} />}
+              {active === "knowledge" && <KnowledgePanel tenantCode="xiaolanmao" />}
               {active === "analytics" && (
                 <>
                   <EffectOverviewPanel overview={state.overview} />

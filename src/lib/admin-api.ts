@@ -4,6 +4,7 @@ const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? ""
 
 function resolveApiPath(path: string) {
   if (apiBaseUrl) return `${apiBaseUrl}${path}`
+  if (path.startsWith("/api/knowledge/")) return path.replace(/^\/api\/knowledge\//, "/knowledge-api/")
   return path.replace(/^\/api\/admin\//, "/admin-api/")
 }
 
@@ -23,6 +24,32 @@ export async function adminFetch<T>(path: string): Promise<T> {
 export async function adminPost<T>(path: string, body: unknown): Promise<T> {
   const url = resolveApiPath(path)
   const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    throw new Error(`提交失败：${response.status}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+export async function knowledgeFetch<T>(path: string): Promise<T> {
+  const response = await fetch(resolveApiPath(path), {
+    headers: { "Content-Type": "application/json" },
+  })
+
+  if (!response.ok) {
+    throw new Error(`请求失败：${response.status}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+export async function knowledgePost<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(resolveApiPath(path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -133,6 +160,24 @@ export type KnowledgeItem = {
   enabled: boolean
   hitCount: number
   updatedAt: string
+}
+
+export type VolcKnowledgeStatus = {
+  ok: boolean
+  configured: boolean
+  base_url: string
+  tenant: { id: string; code: string; name: string } | null
+  resource_id_configured: boolean
+  collection_name_configured: boolean
+  project: string
+  default_doc_id_configured: boolean
+}
+
+export type VolcKnowledgeResponse = {
+  ok: boolean
+  upstream_status?: number
+  data?: unknown
+  error?: { code: string; message: string }
 }
 
 export type AdminOverview = {
