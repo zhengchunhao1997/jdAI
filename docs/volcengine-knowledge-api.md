@@ -8,6 +8,7 @@
 
 ```txt
 GET  /api/knowledge/status
+POST /api/knowledge/tenant-config
 POST /api/knowledge/search
 POST /api/knowledge/docs
 POST /api/knowledge/points
@@ -29,25 +30,51 @@ Authorization: Bearer <JIDAH_API_KEY>
 Content-Type: application/json
 ```
 
-## 服务器环境变量
+## 配置方式
 
-火山密钥只放服务器 `.env`，不要提交到 GitHub。
+火山平台 API Key 只放服务器 `.env`，不要提交到 GitHub。
 
 ```txt
 VOLC_KNOWLEDGE_API_KEY=火山知识库 API Key
 VOLC_KNOWLEDGE_BASE_URL=https://api-knowledgebase.mlp.cn-beijing.volces.com
-VOLC_KNOWLEDGE_RESOURCE_ID=火山知识库资源 ID
-VOLC_KNOWLEDGE_COLLECTION_NAME=知识库名称
-VOLC_KNOWLEDGE_PROJECT=default
-VOLC_KNOWLEDGE_DOC_ID=默认写入文档 ID
 ```
 
-`VOLC_KNOWLEDGE_RESOURCE_ID`、`VOLC_KNOWLEDGE_COLLECTION_NAME`、`VOLC_KNOWLEDGE_DOC_ID` 需要从火山控制台或 API 查询确认。
+每个租户自己的知识库配置保存在 `v2_tenants.settingsJson.volc_knowledge`，不要做成全局配置。
+
+结构：
+
+```json
+{
+  "volc_knowledge": {
+    "resource_id": "火山知识库资源 ID",
+    "collection_name": "知识库名称",
+    "project": "default",
+    "doc_id": "默认写入文档 ID"
+  }
+}
+```
+
+## 配置租户知识库
+
+```bash
+curl -X POST 'http://1.92.99.77:39080/api/knowledge/tenant-config' \
+  -H 'Authorization: Bearer <JIDAH_API_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "tenant_code": "xiaolanmao",
+    "resource_id": "火山知识库资源ID",
+    "collection_name": "火山知识库名称",
+    "project": "default",
+    "doc_id": "默认文档ID"
+  }'
+```
+
+`doc_id` 用于后续新增话术切片；如果只做检索，可以先不配置。
 
 ## 状态检查
 
 ```bash
-curl 'http://1.92.99.77:39080/api/knowledge/status' \
+curl 'http://1.92.99.77:39080/api/knowledge/status?tenant_code=xiaolanmao' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>'
 ```
 
@@ -58,15 +85,17 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/search' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "query": "有副作用吗？",
     "limit": 3
   }'
 ```
 
-如果没有配置默认资源，也可以显式传：
+如果临时覆盖租户配置，也可以显式传：
 
 ```json
 {
+  "tenant_code": "xiaolanmao",
   "resource_id": "火山知识库资源ID",
   "collection_name": "知识库名称",
   "project": "default",
@@ -82,6 +111,7 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/docs' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "offset": 0,
     "limit": 50
   }'
@@ -94,6 +124,7 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/points' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "offset": 0,
     "limit": 50
   }'
@@ -108,6 +139,7 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/points-add' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "doc_id": "火山文档ID",
     "chunk_type": "text",
     "chunk_title": "副作用说明",
@@ -122,6 +154,7 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/points-update' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "point_id": "火山切片ID",
     "chunk_title": "副作用说明",
     "content": "修改后的标准话术"
@@ -135,6 +168,7 @@ curl -X POST 'http://1.92.99.77:39080/api/knowledge/points-delete' \
   -H 'Authorization: Bearer <JIDAH_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
+    "tenant_code": "xiaolanmao",
     "point_id": "火山切片ID"
   }'
 ```

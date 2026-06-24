@@ -7,13 +7,15 @@ import {
   listVolcKnowledgeDocs,
   listVolcKnowledgePoints,
   searchVolcKnowledge,
+  updateTenantVolcKnowledgeConfig,
   updateVolcKnowledgePoint,
 } from "@/lib/volcengine-knowledge"
 
 export async function GET(request: Request, context: { params: Promise<{ action: string }> }) {
   const { action } = await context.params
+  const searchParams = new URL(request.url).searchParams
   const result = action === "status"
-    ? getVolcKnowledgeStatus(request.headers)
+    ? await getVolcKnowledgeStatus(searchParams, request.headers)
     : { status: 404, body: { ok: false, error: { code: "NOT_FOUND", message: "knowledge action not found" } } }
 
   return NextResponse.json(result.body, { status: result.status })
@@ -33,6 +35,7 @@ function dispatchPost(action: string, body: unknown, headers: Headers) {
   if (action === "points-add") return addVolcKnowledgePoint(body, headers)
   if (action === "points-update") return updateVolcKnowledgePoint(body, headers)
   if (action === "points-delete") return deleteVolcKnowledgePoint(body, headers)
+  if (action === "tenant-config") return updateTenantVolcKnowledgeConfig(body, headers)
 
   return Promise.resolve({
     status: 404,

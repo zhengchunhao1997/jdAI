@@ -1,11 +1,15 @@
 import { z } from "zod"
 
+import { prisma } from "@/lib/prisma"
+
 const nullableString = z.preprocess(emptyToUndefined, z.string().optional())
 const nullableInt = z.preprocess(emptyToUndefined, z.coerce.number().int().optional())
 const nullableNumber = z.preprocess(emptyToUndefined, z.coerce.number().optional())
 const nullableBoolean = z.preprocess(emptyToUndefined, z.coerce.boolean().optional())
 
 const collectionSchema = z.object({
+  tenant_id: nullableString,
+  tenant_code: nullableString,
   resource_id: nullableString,
   collection_name: nullableString,
   project: nullableString,
@@ -53,6 +57,15 @@ const deletePointSchema = collectionSchema.extend({
   point_id: z.string().min(1),
 })
 
+const tenantConfigSchema = z.object({
+  tenant_id: nullableString,
+  tenant_code: nullableString,
+  resource_id: z.string().min(1),
+  collection_name: z.string().min(1),
+  project: nullableString,
+  doc_id: nullableString,
+})
+
 const endpoints = {
   searchKnowledge: "/api/knowledge/collection/search_knowledge",
   listDocs: "/api/knowledge/doc/list",
@@ -67,9 +80,22 @@ type VolcResult = {
   body: unknown
 }
 
-export function getVolcKnowledgeStatus(headers?: Headers): VolcResult {
+type TenantKnowledgeConfig = {
+  resource_id?: string
+  collection_name?: string
+  project?: string
+  doc_id?: string
+}
+
+export async function getVolcKnowledgeStatus(searchParams: URLSearchParams, headers?: Headers): Promise<VolcResult> {
   const auth = verifyApiKey(headers)
   if (!auth.ok) return auth
+
+  const tenantResult = await resolveTenantKnowledgeConfig({
+    tenant_id: searchParams.get("tenant_id") ?? undefined,
+    tenant_code: searchParams.get("tenant_code") ?? undefined,
+  })
+  if (!tenantResult.ok) return tenantResult
 
   return {
     status: 200,
@@ -77,10 +103,11 @@ export function getVolcKnowledgeStatus(headers?: Headers): VolcResult {
       ok: true,
       configured: Boolean(process.env.VOLC_KNOWLEDGE_API_KEY),
       base_url: getBaseUrl(),
-      resource_id_configured: Boolean(process.env.VOLC_KNOWLEDGE_RESOURCE_ID),
-      collection_name_configured: Boolean(process.env.VOLC_KNOWLEDGE_COLLECTION_NAME),
-      project: process.env.VOLC_KNOWLEDGE_PROJECT ?? "default",
-      default_doc_id_configured: Boolean(process.env.VOLC_KNOWLEDGE_DOC_ID),
+      tenant: tenantResult.tenant,
+      resource_id_configured: Boolean(tenantResult.config.resource_id),
+      collection_name_configured: Boolean(tenantResult.config.collection_name),
+      project: tenantResult.config.project ?? "default",
+      default_doc_id_configured: Boolean(tenantResult.config.doc_id),
     },
   }
 }
@@ -92,8 +119,11 @@ export async function searchVolcKnowledge(body: unknown, headers?: Headers) {
   const input = parseBody(searchSchema, body)
   if (!input.ok) return input
 
+  const config = await resolveTenantKnowledgeConfig(input.data)
+  if (!config.ok) return config
+
   return callVolcKnowledge(endpoints.searchKnowledge, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     query: input.data.query,
     limit: input.data.limit,
     dense_weight: input.data.dense_weight,
@@ -107,8 +137,11 @@ export async function listVolcKnowledgeDocs(body: unknown, headers?: Headers) {
   const input = parseBody(listDocsSchema, body)
   if (!input.ok) return input
 
+  const config = await resolveTenantKnowledgeConfig(input.data)
+  if (!config.ok) return config
+
   return callVolcKnowledge(endpoints.listDocs, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     offset: input.data.offset,
     limit: input.data.limit,
     doc_type: input.data.doc_type,
@@ -123,8 +156,11 @@ export async function listVolcKnowledgePoints(body: unknown, headers?: Headers) 
   const input = parseBody(listPointsSchema, body)
   if (!input.ok) return input
 
+  const config = await resolveTenantKnowledgeConfig(input.data)
+  if (!config.ok) return config
+
   return callVolcKnowledge(endpoints.listPoints, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     offset: input.data.offset,
     limit: input.data.limit,
     doc_ids: input.data.doc_ids,
@@ -137,14 +173,17 @@ export async function addVolcKnowledgePoint(body: unknown, headers?: Headers) {
   const auth = verifyApiKey(headers)
   if (!auth.ok) return auth
 
-  const input = parseBody(addPointSchema, withDefaultDocId(body))
+  const config = await resolveTenantKnowledgeConfig(body)
+  if (!config.ok) return config
+
+  const input = parseBody(addPointSchema, withDefaultDocId(body, config.config))
   if (!input.ok) return input
   if (!input.data.content && !input.data.question && !input.data.fields?.length) {
     return validationError("content, question or fields is required")
   }
 
   return callVolcKnowledge(endpoints.addPoint, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     doc_id: input.data.doc_id,
     chunk_type: input.data.chunk_type,
     chunk_title: input.data.chunk_title,
@@ -160,9 +199,11 @@ export async function updateVolcKnowledgePoint(body: unknown, headers?: Headers)
 
   const input = parseBody(updatePointSchema, body)
   if (!input.ok) return input
+  const config = await resolveTenantKnowledgeConfig(input.data)
+  if (!config.ok) return config
 
   return callVolcKnowledge(endpoints.updatePoint, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     point_id: input.data.point_id,
     chunk_title: input.data.chunk_title,
     content: input.data.content,
@@ -177,11 +218,71 @@ export async function deleteVolcKnowledgePoint(body: unknown, headers?: Headers)
 
   const input = parseBody(deletePointSchema, body)
   if (!input.ok) return input
+  const config = await resolveTenantKnowledgeConfig(input.data)
+  if (!config.ok) return config
 
   return callVolcKnowledge(endpoints.deletePoint, {
-    ...collectionPayload(input.data),
+    ...collectionPayload(input.data, config.config),
     point_id: input.data.point_id,
   })
+}
+
+export async function updateTenantVolcKnowledgeConfig(body: unknown, headers?: Headers) {
+  const auth = verifyApiKey(headers)
+  if (!auth.ok) return auth
+
+  const input = parseBody(tenantConfigSchema, body)
+  if (!input.ok) return input
+
+  const tenant = await prisma.v2Tenant.findFirst({
+    where: input.data.tenant_id ? { id: input.data.tenant_id } : { code: input.data.tenant_code },
+    select: { id: true, code: true, name: true, settingsJson: true },
+  })
+  if (!tenant) {
+    return {
+      status: 404,
+      body: {
+        ok: false,
+        error: {
+          code: "TENANT_NOT_FOUND",
+          message: "tenant not found",
+        },
+      },
+    }
+  }
+
+  const currentSettings =
+    tenant.settingsJson && typeof tenant.settingsJson === "object" && !Array.isArray(tenant.settingsJson)
+      ? tenant.settingsJson as Record<string, unknown>
+      : {}
+
+  const settingsJson = {
+    ...currentSettings,
+    volc_knowledge: {
+      resource_id: input.data.resource_id,
+      collection_name: input.data.collection_name,
+      project: input.data.project ?? "default",
+      doc_id: input.data.doc_id,
+    },
+  }
+
+  await prisma.v2Tenant.update({
+    where: { id: tenant.id },
+    data: { settingsJson },
+  })
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      tenant: {
+        id: tenant.id,
+        code: tenant.code,
+        name: tenant.name,
+      },
+      volc_knowledge: settingsJson.volc_knowledge,
+    },
+  }
 }
 
 async function callVolcKnowledge(path: string, payload: Record<string, unknown>): Promise<VolcResult> {
@@ -262,10 +363,64 @@ function validationError(message: string): VolcResult & { ok: false } {
   }
 }
 
-function collectionPayload(input: z.infer<typeof collectionSchema>) {
-  const resourceId = input.resource_id ?? process.env.VOLC_KNOWLEDGE_RESOURCE_ID
-  const collectionName = input.collection_name ?? process.env.VOLC_KNOWLEDGE_COLLECTION_NAME
-  const project = input.project ?? process.env.VOLC_KNOWLEDGE_PROJECT ?? "default"
+async function resolveTenantKnowledgeConfig(input: unknown): Promise<
+  | { ok: true; config: TenantKnowledgeConfig; tenant: { id: string; code: string; name: string } | null }
+  | VolcResult & { ok: false }
+> {
+  const tenantInput = collectionSchema.partial().safeParse(input)
+  if (!tenantInput.success) return validationError("invalid tenant knowledge config input")
+
+  const tenantId = tenantInput.data.tenant_id
+  const tenantCode = tenantInput.data.tenant_code
+  if (!tenantId && !tenantCode) {
+    return validationError("tenant_id or tenant_code is required")
+  }
+
+  const tenant = await prisma.v2Tenant.findFirst({
+    where: tenantId ? { id: tenantId } : { code: tenantCode },
+    select: { id: true, code: true, name: true, settingsJson: true },
+  })
+  if (!tenant) {
+    return {
+      ok: false,
+      status: 404,
+      body: {
+        ok: false,
+        error: {
+          code: "TENANT_NOT_FOUND",
+          message: "tenant not found",
+        },
+      },
+    }
+  }
+
+  const config = getTenantKnowledgeConfig(tenant.settingsJson)
+  return {
+    ok: true,
+    tenant: { id: tenant.id, code: tenant.code, name: tenant.name },
+    config,
+  }
+}
+
+function getTenantKnowledgeConfig(settingsJson: unknown): TenantKnowledgeConfig {
+  if (!settingsJson || typeof settingsJson !== "object" || Array.isArray(settingsJson)) return {}
+  const settings = settingsJson as Record<string, unknown>
+  const volc = settings.volc_knowledge
+  if (!volc || typeof volc !== "object" || Array.isArray(volc)) return {}
+
+  const config = volc as Record<string, unknown>
+  return {
+    resource_id: stringOrUndefined(config.resource_id),
+    collection_name: stringOrUndefined(config.collection_name),
+    project: stringOrUndefined(config.project),
+    doc_id: stringOrUndefined(config.doc_id),
+  }
+}
+
+function collectionPayload(input: z.infer<typeof collectionSchema>, config: TenantKnowledgeConfig) {
+  const resourceId = input.resource_id ?? config.resource_id
+  const collectionName = input.collection_name ?? config.collection_name
+  const project = input.project ?? config.project ?? "default"
 
   return {
     resource_id: resourceId,
@@ -274,10 +429,10 @@ function collectionPayload(input: z.infer<typeof collectionSchema>) {
   }
 }
 
-function withDefaultDocId(body: unknown) {
+function withDefaultDocId(body: unknown, config: TenantKnowledgeConfig) {
   if (!body || typeof body !== "object" || Array.isArray(body)) return body
   if ("doc_id" in body) return body
-  const docId = process.env.VOLC_KNOWLEDGE_DOC_ID
+  const docId = config.doc_id
   if (!docId) return body
   return { ...body, doc_id: docId }
 }
@@ -302,4 +457,10 @@ function emptyToUndefined(value: unknown) {
   if (value === undefined || value === null) return undefined
   if (typeof value === "string" && value.trim() === "") return undefined
   return value
+}
+
+function stringOrUndefined(value: unknown) {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
 }

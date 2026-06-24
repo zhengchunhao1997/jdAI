@@ -29,6 +29,7 @@ import {
   listVolcKnowledgeDocs,
   listVolcKnowledgePoints,
   searchVolcKnowledge,
+  updateTenantVolcKnowledgeConfig,
   updateVolcKnowledgePoint,
 } from "@/lib/volcengine-knowledge"
 import { sendXiaolanmaoMessage } from "@/lib/xiaolanmao-chat-service"
@@ -75,7 +76,7 @@ const routes = [
     return createV2CustomerServiceEvent(await request.json(), request.headers)
   }),
   route("GET", /^\/api\/knowledge\/status$/, async (request) => {
-    return getVolcKnowledgeStatus(request.headers)
+    return getVolcKnowledgeStatus(request.url.searchParams, request.headers)
   }),
   route("POST", /^\/api\/knowledge\/search$/, async (request) => {
     return searchVolcKnowledge(await request.json(), request.headers)
@@ -94,6 +95,9 @@ const routes = [
   }),
   route("POST", /^\/api\/knowledge\/points-delete$/, async (request) => {
     return deleteVolcKnowledgePoint(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/tenant-config$/, async (request) => {
+    return updateTenantVolcKnowledgeConfig(await request.json(), request.headers)
   }),
   route("POST", /^\/api\/coze-sync\/run$/, async () => {
     return runCozeSync()
