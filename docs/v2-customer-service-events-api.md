@@ -18,7 +18,7 @@ POST /api/v2/customer-service/events
 POST https://jida.ink/api/v2/customer-service/events
 ```
 
-当前接口尚未实现，本文档用于先搭建 Coze 工作流出参和 HTTP 节点。
+当前接口已在代码中实现，发布到服务器后即可用于 Coze HTTP 节点直接测试入库。
 
 ## 认证方式
 
@@ -451,7 +451,7 @@ Content-Type: application/json
 Authorization: Bearer <JIDAH_API_KEY>
 ```
 
-接口正式实现前，先在 Coze 里按这个结构配置出参即可。`<JIDAH_API_KEY>` 后续由即答后台生成，不要使用 Coze 自己的 PAT。
+`<JIDAH_API_KEY>` 使用即答后台服务端配置的写入密钥，不要使用 Coze 自己的 PAT。
 
 ### 推荐 Body 模板
 

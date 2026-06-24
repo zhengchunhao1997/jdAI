@@ -180,7 +180,7 @@ export async function createV2CustomerServiceEvent(body: unknown, headers?: Head
         lastMessage: input.messages.ai_answer,
         lastMessageAt: new Date(),
         messageCount: { increment: 2 },
-        statusCode: input.conversation.status_code ?? input.lead?.status_code ?? conversation.statusCode,
+        statusCode: input.conversation.status_code ?? conversation.statusCode,
         intentLevelCode: input.conversation.intent_level_code ?? input.lead?.intent_level_code ?? conversation.intentLevelCode,
         stageCode: input.conversation.stage_code ?? input.lead?.stage_code ?? conversation.stageCode,
         summary: input.conversation.summary ?? conversation.summary,
