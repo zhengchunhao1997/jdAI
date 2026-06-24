@@ -9,7 +9,7 @@ export const serverEnv = {
   defaultMerchantId: process.env.DEFAULT_MERCHANT_ID,
   workerIntervalMs: Number(process.env.WORKER_INTERVAL_MS ?? 3000),
   workerBatchSize: Number(process.env.WORKER_BATCH_SIZE ?? 5),
-  cozeSyncEnabled: process.env.COZE_SYNC_ENABLED !== "false",
+  cozeSyncEnabled: process.env.COZE_SYNC_ENABLED === "true",
   cozeSyncIntervalMs: Number(process.env.COZE_SYNC_INTERVAL_MS ?? 3 * 60 * 1000),
 }
 
