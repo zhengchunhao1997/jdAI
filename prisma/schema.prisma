@@ -320,3 +320,547 @@ model CozeSyncState {
 
   @@map("coze_sync_states")
 }
+
+/// V2 租户表：平台上的一个客户项目或商户，是所有业务数据隔离的根节点。
+model V2Tenant {
+  id             String                  @id @default(cuid())
+  code           String                  @unique
+  name           String
+  industry       String?
+  status         String                  @default("ACTIVE")
+  settingsJson   Json?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  tenantUsers    V2TenantUser[]
+  channels       V2Channel[]
+  customers      V2Customer[]
+  conversations  V2Conversation[]
+  messages       V2Message[]
+  workflows      V2Workflow[]
+  aiRuns         V2AiRun[]
+  leads          V2Lead[]
+  leadEvents     V2LeadEvent[]
+  followUps      V2FollowUp[]
+  deals          V2Deal[]
+  dictionaries   V2Dictionary[]
+  missQuestions  V2KbMissQuestion[]
+  qualityChecks  V2AnswerQualityCheck[]
+  auditLogs      V2AuditLog[]
+
+  @@index([status])
+  @@map("v2_tenants")
+}
+
+/// V2 后台用户表：平台管理员、租户管理员、客服、销售、只读账号统一存储。
+model V2User {
+  id              String           @id @default(cuid())
+  username        String           @unique
+  passwordHash    String
+  displayName     String
+  phone           String?
+  email           String?
+  status          String           @default("ACTIVE")
+  isPlatformAdmin Boolean          @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tenantUsers     V2TenantUser[]
+  sessions        V2UserSession[]
+  assignedConvs   V2Conversation[] @relation("ConversationAssignedStaff")
+  ownedLeads      V2Lead[]         @relation("LeadOwner")
+  followUps       V2FollowUp[]
+  auditLogs       V2AuditLog[]
+
+  @@index([status])
+  @@map("v2_users")
+}
+
+/// V2 租户用户关系表：把后台账号分配到租户，并赋予租户内角色。
+model V2TenantUser {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  roleCode  String   @default("viewer")
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    V2Tenant @relation(fields: [tenantId], references: [id])
+  user      V2User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId, roleCode])
+  @@map("v2_tenant_users")
+}
+
+/// V2 登录会话表：保存后台登录态的哈希令牌和过期时间。
+model V2UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  ip         String?
+  userAgent  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  user       V2User   @relation(fields: [userId], references: [id])
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@map("v2_user_sessions")
+}
+
+/// V2 渠道表：记录网页、公众号、企微、抖音、小红书、飞书、钉钉、APP 等渠道配置。
+model V2Channel {
+  id              String           @id @default(cuid())
+  tenantId        String
+  channelType     String
+  channelName     String
+  externalAppId   String?
+  configJson      Json?
+  status          String           @default("ACTIVE")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tenant          V2Tenant         @relation(fields: [tenantId], references: [id])
+  customers       V2Customer[]
+  identities      V2CustomerIdentity[]
+  conversations   V2Conversation[]
+  workflows       V2Workflow[]
+
+  @@index([tenantId, channelType])
+  @@index([tenantId, status])
+  @@map("v2_channels")
+}
+
+/// V2 客户表：按用户聚合，跨渠道身份通过 customer_id 归并。
+model V2Customer {
+  id               String               @id @default(cuid())
+  tenantId         String
+  primaryChannelId String?
+  externalUserId   String?
+  nickname         String?
+  avatarUrl        String?
+  phone            String?
+  wechat           String?
+  email            String?
+  location         String?
+  status           String               @default("ACTIVE")
+  firstSeenAt      DateTime             @default(now())
+  lastSeenAt       DateTime             @default(now())
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  tenant           V2Tenant             @relation(fields: [tenantId], references: [id])
+  primaryChannel   V2Channel?           @relation(fields: [primaryChannelId], references: [id])
+  identities       V2CustomerIdentity[]
+  profile          V2CustomerProfile?
+  conversations    V2Conversation[]
+  messages         V2Message[]
+  leads            V2Lead[]
+  followUps        V2FollowUp[]
+  deals            V2Deal[]
+  missQuestions    V2KbMissQuestion[]
+
+  @@index([tenantId, lastSeenAt])
+  @@index([tenantId, status])
+  @@index([tenantId, externalUserId])
+  @@map("v2_customers")
+}
+
+/// V2 客户渠道身份表：保存同一客户在不同渠道的 openid、unionid、网页访客 ID 等身份。
+model V2CustomerIdentity {
+  id             String     @id @default(cuid())
+  tenantId       String
+  customerId     String
+  channelId      String
+  channelType    String
+  externalUserId String
+  externalOpenId String?
+  externalUnionId String?
+  nickname       String?
+  rawJson        Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  customer       V2Customer @relation(fields: [customerId], references: [id])
+  channel        V2Channel  @relation(fields: [channelId], references: [id])
+
+  @@unique([tenantId, channelId, externalUserId])
+  @@index([customerId])
+  @@index([tenantId, externalUnionId])
+  @@map("v2_customer_identities")
+}
+
+/// V2 客户画像表：用 JSON 存储不同行业的动态画像字段，避免绑定单一业务流程。
+model V2CustomerProfile {
+  id              String     @id @default(cuid())
+  tenantId        String
+  customerId      String     @unique
+  profileJson     Json?
+  tags            String[]   @default([])
+  profileScore    Int        @default(0)
+  lastExtractedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  customer        V2Customer @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId, profileScore])
+  @@map("v2_customer_profiles")
+}
+
+/// V2 会话表：一次连续咨询过程，可按用户聚合查看，也可按会话查看。
+model V2Conversation {
+  id                     String                  @id @default(cuid())
+  tenantId               String
+  customerId             String
+  channelId              String
+  externalConversationId String?
+  source                 String?
+  sourceDetail           String?
+  statusCode             String                  @default("AI_SERVING")
+  intentLevelCode        String                  @default("UNKNOWN")
+  stageCode              String                  @default("NEW")
+  summary                String?
+  lastMessage            String?
+  lastMessageAt          DateTime?
+  messageCount           Int                     @default(0)
+  assignedStaffId        String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  closedAt               DateTime?
+  tenant                 V2Tenant                @relation(fields: [tenantId], references: [id])
+  customer               V2Customer              @relation(fields: [customerId], references: [id])
+  channel                V2Channel               @relation(fields: [channelId], references: [id])
+  assignedStaff          V2User?                 @relation("ConversationAssignedStaff", fields: [assignedStaffId], references: [id])
+  messages               V2Message[]
+  aiRuns                 V2AiRun[]
+  leads                  V2Lead[]
+  leadEvents             V2LeadEvent[]
+  followUps              V2FollowUp[]
+  deals                  V2Deal[]
+  missQuestions          V2KbMissQuestion[]
+  qualityChecks          V2AnswerQualityCheck[]
+
+  @@index([tenantId, updatedAt])
+  @@index([tenantId, customerId, updatedAt])
+  @@index([tenantId, statusCode])
+  @@index([tenantId, intentLevelCode])
+  @@index([tenantId, stageCode])
+  @@index([assignedStaffId])
+  @@map("v2_conversations")
+}
+
+/// V2 消息表：保存用户、AI、人工、系统消息，content 是最终展示给用户的内容。
+model V2Message {
+  id                 String                  @id @default(cuid())
+  tenantId           String
+  conversationId     String
+  customerId         String
+  role               String
+  content            String
+  contentType        String                  @default("text")
+  messageSeq         Int
+  externalMessageId  String?
+  rawJson            Json?
+  createdAt          DateTime                @default(now())
+  tenant             V2Tenant                @relation(fields: [tenantId], references: [id])
+  conversation       V2Conversation          @relation(fields: [conversationId], references: [id])
+  customer           V2Customer              @relation(fields: [customerId], references: [id])
+  aiRunsAsUser       V2AiRun[]               @relation("AiRunUserMessage")
+  aiRunsAsAi         V2AiRun[]               @relation("AiRunAiMessage")
+  knowledgeRefs      V2MessageKnowledgeRef[]
+  missQuestions      V2KbMissQuestion[]
+  qualityChecks      V2AnswerQualityCheck[]
+
+  @@unique([conversationId, messageSeq])
+  @@index([tenantId, conversationId, createdAt])
+  @@index([tenantId, customerId, createdAt])
+  @@index([tenantId, role])
+  @@map("v2_messages")
+}
+
+/// V2 工作流配置表：记录不同租户、渠道、用途对应的 Coze 或其他供应商工作流。
+model V2Workflow {
+  id             String     @id @default(cuid())
+  tenantId       String
+  channelId      String?
+  provider       String     @default("coze")
+  purpose        String     @default("chat")
+  workflowId     String
+  workflowVersion String?
+  modelName      String?
+  promptVersion  String?
+  personaVersion String?
+  configJson     Json?
+  status         String     @default("ACTIVE")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  tenant         V2Tenant   @relation(fields: [tenantId], references: [id])
+  channel        V2Channel? @relation(fields: [channelId], references: [id])
+  aiRuns         V2AiRun[]
+
+  @@index([tenantId, provider, purpose])
+  @@index([tenantId, status])
+  @@map("v2_workflows")
+}
+
+/// V2 AI 运行记录表：记录每次 AI 回复的输入、原始输出、最终答案、模型和工作流版本。
+model V2AiRun {
+  id                 String                  @id @default(cuid())
+  tenantId           String
+  conversationId     String
+  userMessageId      String?
+  aiMessageId        String?
+  workflowConfigId   String?
+  workflowProvider   String                  @default("coze")
+  workflowId         String?
+  workflowVersion    String?
+  modelName          String?
+  promptVersion      String?
+  personaVersion     String?
+  inputJson          Json?
+  rawOutput          String?
+  finalAnswer        String?
+  latencyMs          Int?
+  status             String                  @default("SUCCESS")
+  errorMessage       String?
+  createdAt          DateTime                @default(now())
+  tenant             V2Tenant                @relation(fields: [tenantId], references: [id])
+  conversation       V2Conversation          @relation(fields: [conversationId], references: [id])
+  userMessage        V2Message?              @relation("AiRunUserMessage", fields: [userMessageId], references: [id])
+  aiMessage          V2Message?              @relation("AiRunAiMessage", fields: [aiMessageId], references: [id])
+  workflow           V2Workflow?             @relation(fields: [workflowConfigId], references: [id])
+  knowledgeRefs      V2MessageKnowledgeRef[]
+  qualityChecks      V2AnswerQualityCheck[]
+
+  @@index([tenantId, conversationId, createdAt])
+  @@index([tenantId, workflowProvider, workflowId])
+  @@index([tenantId, status])
+  @@map("v2_ai_runs")
+}
+
+/// V2 消息知识库引用表：保存 AI 回复引用的 Coze 知识库快照，用于追踪是否篡改知识库意思。
+model V2MessageKnowledgeRef {
+  id                       String    @id @default(cuid())
+  tenantId                 String
+  aiRunId                  String
+  messageId                String
+  externalKbId             String?
+  externalDocId            String?
+  knowledgeTitle           String?
+  knowledgeContentSnapshot String?
+  matchedText              String?
+  similarityScore          Float?
+  rank                     Int?
+  createdAt                DateTime  @default(now())
+  aiRun                    V2AiRun   @relation(fields: [aiRunId], references: [id])
+  message                  V2Message @relation(fields: [messageId], references: [id])
+
+  @@index([tenantId, aiRunId])
+  @@index([tenantId, messageId])
+  @@index([tenantId, externalKbId])
+  @@map("v2_message_knowledge_refs")
+}
+
+/// V2 线索表：通用销售线索沉淀，意向等级、阶段、状态全部使用字典 code。
+model V2Lead {
+  id                    String           @id @default(cuid())
+  tenantId              String
+  customerId            String
+  conversationId        String
+  intentLevelCode       String           @default("UNKNOWN")
+  stageCode             String           @default("NEW")
+  statusCode            String           @default("OPEN")
+  score                 Int              @default(0)
+  mainNeed              String?
+  mainConcern           String?
+  recommendedSolution   String?
+  nextAction            String?
+  ownerStaffId          String?
+  lastFollowUpAt        DateTime?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  tenant                V2Tenant         @relation(fields: [tenantId], references: [id])
+  customer              V2Customer       @relation(fields: [customerId], references: [id])
+  conversation          V2Conversation   @relation(fields: [conversationId], references: [id])
+  ownerStaff            V2User?          @relation("LeadOwner", fields: [ownerStaffId], references: [id])
+  events                V2LeadEvent[]
+  followUps             V2FollowUp[]
+  deals                 V2Deal[]
+
+  @@index([tenantId, intentLevelCode])
+  @@index([tenantId, stageCode])
+  @@index([tenantId, statusCode])
+  @@index([tenantId, ownerStaffId])
+  @@index([tenantId, updatedAt])
+  @@map("v2_leads")
+}
+
+/// V2 线索事件表：记录线索等级、阶段、状态、画像等变化，解释为什么成为高意向。
+model V2LeadEvent {
+  id             String         @id @default(cuid())
+  tenantId       String
+  leadId         String
+  conversationId String?
+  eventType      String
+  fromValue      String?
+  toValue        String?
+  reason         String?
+  operatorType   String         @default("SYSTEM")
+  operatorId     String?
+  createdAt      DateTime       @default(now())
+  tenant         V2Tenant       @relation(fields: [tenantId], references: [id])
+  lead           V2Lead         @relation(fields: [leadId], references: [id])
+  conversation   V2Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, eventType])
+  @@map("v2_lead_events")
+}
+
+/// V2 跟进记录表：保存人工客服或销售的跟进行为和下次跟进时间。
+model V2FollowUp {
+  id             String          @id @default(cuid())
+  tenantId       String
+  leadId         String
+  customerId     String
+  conversationId String?
+  staffId        String?
+  followUpType   String
+  content        String?
+  nextFollowUpAt DateTime?
+  resultCode     String?
+  createdAt      DateTime        @default(now())
+  tenant         V2Tenant        @relation(fields: [tenantId], references: [id])
+  lead           V2Lead          @relation(fields: [leadId], references: [id])
+  customer       V2Customer      @relation(fields: [customerId], references: [id])
+  conversation   V2Conversation? @relation(fields: [conversationId], references: [id])
+  staff          V2User?         @relation(fields: [staffId], references: [id])
+
+  @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, staffId])
+  @@index([tenantId, nextFollowUpAt])
+  @@map("v2_follow_ups")
+}
+
+/// V2 成交记录表：同时支持人工录入、Coze 回传、接口同步成交状态。
+model V2Deal {
+  id              String          @id @default(cuid())
+  tenantId        String
+  leadId          String
+  customerId      String
+  conversationId  String?
+  amount          Decimal?        @db.Decimal(12, 2)
+  currency        String          @default("CNY")
+  dealStatusCode  String          @default("PENDING_PAYMENT")
+  source          String          @default("HUMAN")
+  externalOrderId String?
+  paidAt          DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  tenant          V2Tenant        @relation(fields: [tenantId], references: [id])
+  lead            V2Lead          @relation(fields: [leadId], references: [id])
+  customer        V2Customer      @relation(fields: [customerId], references: [id])
+  conversation    V2Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@index([tenantId, dealStatusCode])
+  @@index([tenantId, externalOrderId])
+  @@index([tenantId, paidAt])
+  @@map("v2_deals")
+}
+
+/// V2 字典表：租户可配置的意向等级、线索阶段、线索状态、渠道类型、顾虑类型等。
+model V2Dictionary {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  dictType    String
+  code        String
+  label       String
+  description String?
+  sortOrder   Int      @default(0)
+  enabled     Boolean  @default(true)
+  metaJson    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      V2Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, dictType, code])
+  @@index([dictType, enabled])
+  @@index([tenantId, dictType, sortOrder])
+  @@map("v2_dictionaries")
+}
+
+/// V2 知识库未命中/异常问题表：记录无知识、低置信、冲突、越界、语气差、改写知识库等问题。
+model V2KbMissQuestion {
+  id              String          @id @default(cuid())
+  tenantId        String
+  conversationId  String?
+  messageId       String?
+  customerId      String?
+  question        String
+  aiAnswer        String?
+  missTypeCode    String          @default("NO_KB")
+  missReason      String?
+  suggestedAnswer String?
+  statusCode      String          @default("PENDING")
+  occurrenceCount Int             @default(1)
+  firstSeenAt     DateTime        @default(now())
+  lastSeenAt      DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  tenant          V2Tenant        @relation(fields: [tenantId], references: [id])
+  conversation    V2Conversation? @relation(fields: [conversationId], references: [id])
+  message         V2Message?      @relation(fields: [messageId], references: [id])
+  customer        V2Customer?     @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId, statusCode])
+  @@index([tenantId, missTypeCode])
+  @@index([tenantId, lastSeenAt])
+  @@map("v2_kb_miss_questions")
+}
+
+/// V2 回答质检表：记录 AI 回复的知识库忠实度、真人语气、销售引导和风险等级。
+model V2AnswerQualityCheck {
+  id                 String          @id @default(cuid())
+  tenantId           String
+  conversationId     String
+  messageId          String?
+  aiRunId            String?
+  fidelityScore      Int?
+  toneScore          Int?
+  helpfulnessScore   Int?
+  salesGuidanceScore Int?
+  riskLevelCode      String          @default("NONE")
+  issuesJson         Json?
+  suggestion         String?
+  reviewStatusCode   String          @default("AUTO")
+  createdAt          DateTime        @default(now())
+  tenant             V2Tenant        @relation(fields: [tenantId], references: [id])
+  conversation       V2Conversation  @relation(fields: [conversationId], references: [id])
+  message            V2Message?      @relation(fields: [messageId], references: [id])
+  aiRun              V2AiRun?        @relation(fields: [aiRunId], references: [id])
+
+  @@index([tenantId, riskLevelCode])
+  @@index([tenantId, reviewStatusCode])
+  @@index([tenantId, conversationId, createdAt])
+  @@map("v2_answer_quality_checks")
+}
+
+/// V2 操作审计日志表：记录平台管理员和租户账号的重要后台操作。
+model V2AuditLog {
+  id           String    @id @default(cuid())
+  tenantId     String?
+  userId       String?
+  action       String
+  resourceType String?
+  resourceId   String?
+  detailJson   Json?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  tenant       V2Tenant? @relation(fields: [tenantId], references: [id])
+  user         V2User?   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("v2_audit_logs")
+}
