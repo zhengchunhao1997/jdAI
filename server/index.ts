@@ -22,6 +22,15 @@ import {
 } from "@/lib/customer-service-records"
 import { prisma } from "@/lib/prisma"
 import { createV2CustomerServiceEvent } from "@/lib/v2-customer-service-events"
+import {
+  addVolcKnowledgePoint,
+  deleteVolcKnowledgePoint,
+  getVolcKnowledgeStatus,
+  listVolcKnowledgeDocs,
+  listVolcKnowledgePoints,
+  searchVolcKnowledge,
+  updateVolcKnowledgePoint,
+} from "@/lib/volcengine-knowledge"
 import { sendXiaolanmaoMessage } from "@/lib/xiaolanmao-chat-service"
 import { serverEnv } from "./env"
 import { handleRequest, route } from "./http"
@@ -64,6 +73,27 @@ const routes = [
   }),
   route("POST", /^\/api\/v2\/customer-service\/events$/, async (request) => {
     return createV2CustomerServiceEvent(await request.json(), request.headers)
+  }),
+  route("GET", /^\/api\/knowledge\/status$/, async (request) => {
+    return getVolcKnowledgeStatus(request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/search$/, async (request) => {
+    return searchVolcKnowledge(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/docs$/, async (request) => {
+    return listVolcKnowledgeDocs(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/points$/, async (request) => {
+    return listVolcKnowledgePoints(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/points-add$/, async (request) => {
+    return addVolcKnowledgePoint(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/points-update$/, async (request) => {
+    return updateVolcKnowledgePoint(await request.json(), request.headers)
+  }),
+  route("POST", /^\/api\/knowledge\/points-delete$/, async (request) => {
+    return deleteVolcKnowledgePoint(await request.json(), request.headers)
   }),
   route("POST", /^\/api\/coze-sync\/run$/, async () => {
     return runCozeSync()
